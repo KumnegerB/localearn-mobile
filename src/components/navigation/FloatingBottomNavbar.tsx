@@ -69,7 +69,8 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
   const unreadCount = useChatStore((s) => s.unreadCount);
 
   const barMarginHorizontal = 18;
-  const barWidth = width - barMarginHorizontal * 2;
+  const maxBarWidth = 440 - barMarginHorizontal * 2;
+  const barWidth = Math.min(width - barMarginHorizontal * 2, maxBarWidth);
 
   const getTabConfig = (routeName: string, focused: boolean) => {
     switch (routeName) {
