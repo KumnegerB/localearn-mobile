@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import { navigationRef } from './navigationRef';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
+import { LandingScreen } from '../screens/auth/LandingScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { TaskListScreen } from '../screens/explore/TaskListScreen';
@@ -148,6 +149,11 @@ export const AppNavigator = () => {
         ) : (
           // Auth Stack
           <>
+            <Stack.Screen
+              name="Landing"
+              component={LandingScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="Login"
               component={LoginScreen}

@@ -7,3 +7,4 @@ export function navigate(name: string, params?: any) {
     navigationRef.navigate(name, params);
   }
 }
+
