@@ -14,20 +14,52 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
 import { validateFullName } from '../../utils/validators';
 
+const MAX_BIO_LENGTH = 160;
+
+const PRESET_SKILLS = [
+  'Plumbing',
+  'Electrical',
+  'Home Cleaning',
+  'Moving & Lifting',
+  'Carpentry',
+  'Painting',
+  'Gardening & Yard',
+  'Tech Support',
+  'Delivery & Errands',
+  'Pet Care',
+  'Tutoring',
+  'Cooking & Catering',
+  'Tailoring',
+  'Auto Repair',
+  'Furniture Assembly',
+  'Handyman',
+];
+
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [bio, setBio] = useState(user?.bio || '');
-  const [skills, setSkills] = useState(user?.skills || '');
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+
+  const skillsList = (user?.skills || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const handleOpenEdit = () => {
     setFullName(user?.full_name || '');
     setBio(user?.bio || '');
-    setSkills(user?.skills || '');
+    const currentSkills = (user?.skills || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setSelectedSkills(currentSkills);
+    setCustomSkillInput('');
     setNameError(null);
     setIsEditing(true);
   };
@@ -35,6 +67,27 @@ export const ProfileScreen = ({ navigation }: any) => {
   const handleFullNameChange = (val: string) => {
     setFullName(val);
     if (nameError) setNameError(null);
+  };
+
+  const toggleSkill = (skill: string) => {
+    if (selectedSkills.includes(skill)) {
+      setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+    } else {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
+
+  const handleAddCustomSkill = () => {
+    const trimmed = customSkillInput.trim();
+    if (!trimmed) return;
+    if (!selectedSkills.includes(trimmed)) {
+      setSelectedSkills([...selectedSkills, trimmed]);
+    }
+    setCustomSkillInput('');
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setSelectedSkills(selectedSkills.filter((s) => s !== skillToRemove));
   };
 
   const handleSaveProfile = async () => {
@@ -49,7 +102,7 @@ export const ProfileScreen = ({ navigation }: any) => {
     const success = await updateProfile({
       full_name: fullName.trim(),
       bio: bio.trim(),
-      skills: skills.trim(),
+      skills: selectedSkills.join(', '),
     });
     setIsSaving(false);
 
@@ -68,27 +121,72 @@ export const ProfileScreen = ({ navigation }: any) => {
     ]);
   };
 
+  const formatJoinDate = (dateStr?: string) => {
+    if (!dateStr) return 'Recently';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString(undefined, {
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Recently';
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile Header */}
-      <View style={styles.header}>
+      {/* Profile Hero Card with Pen in Top Right */}
+      <View style={styles.headerCard}>
+        <TouchableOpacity
+          style={styles.editPenBtn}
+          onPress={handleOpenEdit}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="pencil" size={17} color="#103B31" />
+        </TouchableOpacity>
+
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{user?.full_name?.charAt(0) || 'U'}</Text>
         </View>
+
         <Text style={styles.name}>{user?.full_name}</Text>
 
         <View style={styles.ratingBadge}>
           <Text style={styles.ratingText}>
             {user?.rating_count && user.rating_count > 0
               ? `★ ${user.rating.toFixed(1)} (${user.rating_count} reviews)`
-              : '0 reviews'}
+              : '★ New Member'}
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.editProfileButton} onPress={handleOpenEdit}>
-          <Ionicons name="create-outline" size={16} color="#2563eb" style={{ marginRight: 6 }} />
-          <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-        </TouchableOpacity>
+        {/* About Me directly under the name & rating */}
+        <Text style={styles.bioText} numberOfLines={3}>
+          {user?.bio && user.bio.trim()
+            ? user.bio.slice(0, MAX_BIO_LENGTH)
+            : 'No bio added yet. Tap the pen to add a short intro!'}
+        </Text>
+
+        {/* Skills Tags directly under description */}
+        <View style={styles.skillsTagsWrapper}>
+          {skillsList.length > 0 ? (
+            skillsList.map((skill, index) => (
+              <View key={index} style={styles.skillTagBadge}>
+                <Text style={styles.skillTagText}>{skill}</Text>
+              </View>
+            ))
+          ) : (
+            <TouchableOpacity
+              style={styles.addSkillsPrompt}
+              onPress={handleOpenEdit}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add-circle-outline" size={14} color="#103B31" style={{ marginRight: 4 }} />
+              <Text style={styles.addSkillsPromptText}>Add your skills</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* My Gigs Management Section */}
@@ -109,27 +207,27 @@ export const ProfileScreen = ({ navigation }: any) => {
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
       </TouchableOpacity>
 
-      {/* Info Sections */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>About Me</Text>
-        </View>
-        <Text style={styles.sectionBody}>
-          {user?.bio && user.bio.trim()
-            ? user.bio
-            : 'No bio added yet. Tap "Edit Profile" to add your introduction!'}
-        </Text>
-      </View>
+      {/* Account Info Card */}
+      <View style={styles.accountCard}>
+        <Text style={styles.accountCardTitle}>Account Information</Text>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Skills & Offers</Text>
+        <View style={styles.accountRow}>
+          <Ionicons name="mail-outline" size={18} color="#64748b" style={styles.accountIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.accountLabel}>Email</Text>
+            <Text style={styles.accountValue}>{user?.email || 'N/A'}</Text>
+          </View>
         </View>
-        <Text style={styles.sectionBody}>
-          {user?.skills && user.skills.trim()
-            ? user.skills
-            : 'No skills listed yet. Tap "Edit Profile" to share what services or help you offer.'}
-        </Text>
+
+        <View style={styles.accountDivider} />
+
+        <View style={styles.accountRow}>
+          <Ionicons name="calendar-outline" size={18} color="#64748b" style={styles.accountIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.accountLabel}>Member Since</Text>
+            <Text style={styles.accountValue}>{formatJoinDate(user?.created_at)}</Text>
+          </View>
+        </View>
       </View>
 
       {/* Log Out Button */}
@@ -150,6 +248,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              {/* Full Name */}
               <Text style={styles.inputLabel}>Full Name</Text>
               <TextInput
                 style={[styles.input, !!nameError && styles.inputError]}
@@ -157,8 +256,8 @@ export const ProfileScreen = ({ navigation }: any) => {
                 onChangeText={handleFullNameChange}
                 placeholder="Your full name"
                 placeholderTextColor="#94a3b8"
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                cursorColor="#103B31"
+                selectionColor="#cce3de"
               />
               {nameError ? (
                 <View style={styles.inlineErrorRow}>
@@ -167,7 +266,13 @@ export const ProfileScreen = ({ navigation }: any) => {
                 </View>
               ) : null}
 
-              <Text style={styles.inputLabel}>About Me (Bio)</Text>
+              {/* About Me with Character Limit */}
+              <View style={styles.labelWithCountRow}>
+                <Text style={styles.inputLabel}>About Me (Bio)</Text>
+                <Text style={styles.charCountText}>
+                  {bio.length}/{MAX_BIO_LENGTH}
+                </Text>
+              </View>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={bio}
@@ -176,23 +281,95 @@ export const ProfileScreen = ({ navigation }: any) => {
                 placeholderTextColor="#94a3b8"
                 multiline
                 numberOfLines={3}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                maxLength={MAX_BIO_LENGTH}
+                cursorColor="#103B31"
+                selectionColor="#cce3de"
               />
 
-              <Text style={styles.inputLabel}>Skills & Offers</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={skills}
-                onChangeText={setSkills}
-                placeholder="e.g. Lawn mowing, Furniture assembly, Dog walking, Math tutoring"
-                placeholderTextColor="#94a3b8"
-                multiline
-                numberOfLines={3}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
-              />
+              {/* Selected Skill Tags Display */}
+              <View style={styles.labelWithCountRow}>
+                <Text style={styles.inputLabel}>Selected Skills ({selectedSkills.length})</Text>
+              </View>
+              {selectedSkills.length > 0 ? (
+                <View style={styles.activeSkillChipsRow}>
+                  {selectedSkills.map((s) => (
+                    <TouchableOpacity
+                      key={s}
+                      style={styles.selectedChip}
+                      onPress={() => handleRemoveSkill(s)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.selectedChipText}>{s}</Text>
+                      <Ionicons name="close-circle" size={15} color="#ffffff" style={{ marginLeft: 4 }} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptySelectedHint}>
+                  Tap tags below to pick skills you can offer.
+                </Text>
+              )}
 
+              {/* Choose from Preset Skill Tags */}
+              <Text style={styles.subSectionTitle}>Choose Skill Tags</Text>
+              <View style={styles.tagGrid}>
+                {PRESET_SKILLS.map((skill) => {
+                  const isSelected = selectedSkills.includes(skill);
+                  return (
+                    <TouchableOpacity
+                      key={skill}
+                      style={[styles.presetTag, isSelected && styles.presetTagSelected]}
+                      onPress={() => toggleSkill(skill)}
+                      activeOpacity={0.7}
+                    >
+                      {isSelected && (
+                        <Ionicons
+                          name="checkmark"
+                          size={13}
+                          color="#ffffff"
+                          style={{ marginRight: 4 }}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.presetTagText,
+                          isSelected && styles.presetTagTextSelected,
+                        ]}
+                      >
+                        {skill}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Custom Skill Input */}
+              <View style={styles.customSkillRow}>
+                <TextInput
+                  style={[styles.input, styles.customSkillInput]}
+                  value={customSkillInput}
+                  onChangeText={setCustomSkillInput}
+                  placeholder="Add custom skill (e.g. Babysitting)"
+                  placeholderTextColor="#94a3b8"
+                  cursorColor="#103B31"
+                  selectionColor="#cce3de"
+                  onSubmitEditing={handleAddCustomSkill}
+                  returnKeyType="done"
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.addCustomSkillBtn,
+                    !customSkillInput.trim() && styles.addCustomSkillBtnDisabled,
+                  ]}
+                  onPress={handleAddCustomSkill}
+                  disabled={!customSkillInput.trim()}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addCustomSkillBtnText}>+ Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Buttons */}
               <View style={styles.modalButtonRow}>
                 <TouchableOpacity
                   style={styles.cancelModalButton}
@@ -228,20 +405,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   content: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 110,
   },
-  header: {
+  headerCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  editPenBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#f2f7f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#cce3de',
+    zIndex: 10,
   },
   avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 4,
     marginBottom: 12,
     shadowColor: '#103B31',
     shadowOpacity: 0.2,
@@ -250,40 +453,70 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#ffffff',
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '800',
   },
   name: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: '800',
     color: '#0f172a',
+    textAlign: 'center',
   },
   ratingBadge: {
     backgroundColor: '#fef3c7',
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    marginTop: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
+    marginTop: 6,
+    marginBottom: 10,
   },
   ratingText: {
     color: '#d97706',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 12,
   },
-  editProfileButton: {
+  bioText: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 21,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  skillsTagsWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  skillTagBadge: {
+    backgroundColor: '#f2f7f5',
+    borderWidth: 1,
+    borderColor: '#cce3de',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  skillTagText: {
+    color: '#103B31',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  addSkillsPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 14,
+    backgroundColor: '#f2f7f5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: '#cce3de',
+    borderStyle: 'dashed',
   },
-  editProfileButtonText: {
-    color: '#2563eb',
-    fontSize: 13,
+  addSkillsPromptText: {
+    color: '#103B31',
+    fontSize: 12,
     fontWeight: '700',
   },
   myGigsCard: {
@@ -293,11 +526,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 16,
     borderRadius: 16,
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#ede9fe',
     shadowColor: '#7c3aed',
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
@@ -312,25 +545,25 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#f5f3ff',
+    backgroundColor: '#fff7ed',
     justifyContent: 'center',
     alignItems: 'center',
   },
   myGigsTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1e1b4b',
+    color: '#1e293b',
   },
   myGigsSubtitle: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#64748b',
     marginTop: 2,
   },
-  section: {
+  accountCard: {
     backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 14,
-    marginBottom: 14,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#f1f5f9',
     shadowColor: '#000',
@@ -338,21 +571,37 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 1,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  sectionBody: {
+  accountCardTitle: {
     fontSize: 14,
-    color: '#64748b',
-    lineHeight: 22,
+    fontWeight: '800',
+    color: '#1e293b',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  accountIcon: {
+    marginRight: 12,
+  },
+  accountLabel: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '600',
+  },
+  accountValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginTop: 1,
+  },
+  accountDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 10,
   },
   logoutButton: {
     flexDirection: 'row',
@@ -361,7 +610,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 4,
   },
   logoutButtonText: {
     color: '#dc2626',
@@ -375,9 +624,9 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '85%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
     padding: 20,
   },
   modalHeader: {
@@ -394,15 +643,26 @@ const styles = StyleSheet.create({
     color: '#0f172a',
   },
   modalScroll: {
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 14,
+    paddingBottom: 24,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
     marginTop: 10,
+  },
+  labelWithCountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  charCountText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontWeight: '600',
   },
   input: {
     backgroundColor: '#f8fafc',
@@ -410,7 +670,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 10,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     fontSize: 15,
     color: '#0f172a',
   },
@@ -430,13 +690,98 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   textArea: {
-    height: 80,
+    height: 76,
     textAlignVertical: 'top',
+  },
+  activeSkillChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  selectedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#103B31',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  selectedChipText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  emptySelectedHint: {
+    fontSize: 13,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+    marginBottom: 8,
+  },
+  subSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  presetTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+  },
+  presetTagSelected: {
+    backgroundColor: '#103B31',
+    borderColor: '#103B31',
+  },
+  presetTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  presetTagTextSelected: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  customSkillRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  customSkillInput: {
+    flex: 1,
+  },
+  addCustomSkillBtn: {
+    backgroundColor: '#103B31',
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addCustomSkillBtnDisabled: {
+    backgroundColor: '#cbd5e1',
+  },
+  addCustomSkillBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 13,
   },
   modalButtonRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 24,
+    marginTop: 20,
   },
   cancelModalButton: {
     flex: 1,
