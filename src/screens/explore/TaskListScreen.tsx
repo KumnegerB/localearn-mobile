@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
   },
   activeFilterPill: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
   },
   filterText: {
     fontSize: 13,

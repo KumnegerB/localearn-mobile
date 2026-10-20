@@ -144,8 +144,8 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         placeholderTextColor="#94a3b8"
         value={title}
         onChangeText={handleTitleChange}
-        cursorColor="#7c3aed"
-        selectionColor="#ddd6fe"
+        cursorColor="#103B31"
+        selectionColor="#d1e3dd"
       />
       {errors.title ? (
         <View style={styles.inlineErrorRow}>
@@ -197,8 +197,8 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         value={budget}
         onChangeText={handleBudgetChange}
         keyboardType="numeric"
-        cursorColor="#7c3aed"
-        selectionColor="#ddd6fe"
+        cursorColor="#103B31"
+        selectionColor="#d1e3dd"
       />
       {errors.budget ? (
         <View style={styles.inlineErrorRow}>
@@ -215,8 +215,8 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         placeholderTextColor="#94a3b8"
         value={locationName}
         onChangeText={handleLocationChange}
-        cursorColor="#7c3aed"
-        selectionColor="#ddd6fe"
+        cursorColor="#103B31"
+        selectionColor="#d1e3dd"
       />
       {errors.location ? (
         <View style={styles.inlineErrorRow}>
@@ -235,8 +235,8 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         onChangeText={handleDescriptionChange}
         multiline
         numberOfLines={4}
-        cursorColor="#7c3aed"
-        selectionColor="#ddd6fe"
+        cursorColor="#103B31"
+        selectionColor="#d1e3dd"
       />
       {errors.description ? (
         <View style={styles.inlineErrorRow}>
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activeCatPill: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#103B31',
   },
   catText: {
     fontSize: 13,
@@ -330,12 +330,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   submitButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#103B31',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 28,
-    shadowColor: '#7c3aed',
+    shadowColor: '#103B31',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View, AppState } from 'react-native';
+import { ActivityIndicator, View, Text, AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import { navigationRef } from './navigationRef';
+import { SiraLogo } from '../components/common/SiraLogo';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
 import { LandingScreen } from '../screens/auth/LandingScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -40,7 +41,16 @@ function MainTabs() {
       <Tab.Screen
         name="Explore"
         component={TaskListScreen}
-        options={{ title: 'Neighborhood Gigs' }}
+        options={{
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <SiraLogo width={42} />
+              <Text style={{ fontSize: 18, fontWeight: '900', color: '#103B31', marginLeft: 8 }}>
+                ስራ
+              </Text>
+            </View>
+          ),
+        }}
       />
       <Tab.Screen
         name="Map"

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { SiraLogo } from '../../components/common/SiraLogo';
 
 export const LandingScreen = ({ navigation }: any) => {
   return (
@@ -18,10 +19,7 @@ export const LandingScreen = ({ navigation }: any) => {
         <View style={styles.centerContent}>
           {/* Brand Logo */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoBadge}>
-              <Ionicons name="sparkles" size={38} color="#ffffff" />
-            </View>
-            <Text style={styles.brandTitle}>LocalEarn</Text>
+            <SiraLogo width={160} />
           </View>
 
           {/* Explanation Text */}
@@ -82,27 +80,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'flex-start',
-    marginBottom: 32,
-  },
-  logoBadge: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
-    backgroundColor: '#7c3aed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#7c3aed',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 8,
-    marginBottom: 16,
-  },
-  brandTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#0f172a',
-    letterSpacing: -0.6,
+    marginBottom: 28,
   },
   textContainer: {
     marginTop: 8,
@@ -110,7 +88,7 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 38,
     fontWeight: '900',
-    color: '#0f172a',
+    color: '#103B31',
     letterSpacing: -1.2,
     lineHeight: 46,
     marginBottom: 16,
@@ -128,11 +106,11 @@ const styles = StyleSheet.create({
   primaryButton: {
     flexDirection: 'row',
     height: 56,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#103B31',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#7c3aed',
+    shadowColor: '#103B31',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -154,7 +132,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   secondaryButtonText: {
-    color: '#475569',
+    color: '#103B31',
     fontSize: 15,
     fontWeight: '700',
   },

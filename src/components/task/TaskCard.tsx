@@ -73,15 +73,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryContainer: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
   },
   categoryText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   badge: {
     paddingHorizontal: 8,

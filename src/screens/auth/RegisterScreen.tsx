@@ -20,6 +20,7 @@ import {
   validatePhoneNumber,
   validatePassword,
 } from '../../utils/validators';
+import { SiraLogo } from '../../components/common/SiraLogo';
 
 interface RegisterErrors {
   fullName?: string;
@@ -115,16 +116,14 @@ export const RegisterScreen = ({ navigation }: any) => {
             </TouchableOpacity>
 
             <View style={styles.brandPill}>
-              <View style={styles.brandIconCircle}>
-                <Ionicons name="sparkles" size={14} color="#ffffff" />
-              </View>
-              <Text style={styles.brandPillText}>LocalEarn</Text>
+              <SiraLogo width={30} />
+              <Text style={styles.brandPillText}>ስራ</Text>
             </View>
           </View>
 
           {/* Heading */}
           <View style={styles.header}>
-            <Text style={styles.title}>Join LocalEarn 🚀</Text>
+            <Text style={styles.title}>Join ስራ 🚀</Text>
             <Text style={styles.subtitle}>
               Create your account to start picking up neighbourhood gigs or posting tasks.
             </Text>
@@ -146,7 +145,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               <Ionicons
                 name="person-outline"
                 size={20}
-                color={errors.fullName ? '#ef4444' : '#7c3aed'}
+                color={errors.fullName ? '#ef4444' : '#103B31'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -156,8 +155,8 @@ export const RegisterScreen = ({ navigation }: any) => {
                 value={fullName}
                 onChangeText={handleFullNameChange}
                 autoCorrect={false}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                cursorColor="#103B31"
+                selectionColor="#d1e3dd"
               />
             </View>
             {errors.fullName ? (
@@ -173,7 +172,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color={errors.email ? '#ef4444' : '#7c3aed'}
+                color={errors.email ? '#ef4444' : '#103B31'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -185,8 +184,8 @@ export const RegisterScreen = ({ navigation }: any) => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                cursorColor="#103B31"
+                selectionColor="#d1e3dd"
               />
             </View>
             {errors.email ? (
@@ -202,7 +201,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               <Ionicons
                 name="call-outline"
                 size={20}
-                color={errors.phoneNumber ? '#ef4444' : '#7c3aed'}
+                color={errors.phoneNumber ? '#ef4444' : '#103B31'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -213,8 +212,8 @@ export const RegisterScreen = ({ navigation }: any) => {
                 onChangeText={handlePhoneChange}
                 keyboardType="phone-pad"
                 autoCorrect={false}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                cursorColor="#103B31"
+                selectionColor="#d1e3dd"
               />
             </View>
             {errors.phoneNumber ? (
@@ -230,7 +229,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={errors.password ? '#ef4444' : '#7c3aed'}
+                color={errors.password ? '#ef4444' : '#103B31'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -242,8 +241,8 @@ export const RegisterScreen = ({ navigation }: any) => {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
-                cursorColor="#7c3aed"
-                selectionColor="#ddd6fe"
+                cursorColor="#103B31"
+                selectionColor="#d1e3dd"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -327,26 +326,18 @@ const styles = StyleSheet.create({
   brandPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f3ff',
-    paddingVertical: 6,
+    backgroundColor: '#f2f7f5',
+    paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ede9fe',
-  },
-  brandIconCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#7c3aed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
+    borderColor: '#d1e3dd',
   },
   brandPillText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#7c3aed',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#103B31',
+    marginLeft: 6,
   },
   header: {
     marginBottom: 20,
@@ -432,12 +423,12 @@ const styles = StyleSheet.create({
   primaryButton: {
     flexDirection: 'row',
     height: 54,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#103B31',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: '#7c3aed',
+    shadowColor: '#103B31',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -461,7 +452,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   signInLink: {
-    color: '#7c3aed',
+    color: '#FF6B3D',
     fontSize: 14,
     fontWeight: '800',
   },

@@ -38,7 +38,7 @@ const TabItem: React.FC<TabItemProps> = ({
         <Ionicons
           name={iconName}
           size={24}
-          color={isFocused ? '#7c3aed' : '#9ca3af'}
+          color={isFocused ? '#103B31' : '#9ca3af'}
         />
         {badgeCount !== undefined && badgeCount > 0 && (
           <View style={styles.badge}>
@@ -51,7 +51,7 @@ const TabItem: React.FC<TabItemProps> = ({
       <Text
         style={[
           styles.tabLabel,
-          { color: isFocused ? '#7c3aed' : '#9ca3af' },
+          { color: isFocused ? '#103B31' : '#9ca3af' },
         ]}
       >
         {label}
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: '#ef4444',
+    backgroundColor: '#FF6B3D',
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#FF6B3D',
     alignItems: 'center',
     justifyContent: 'center',
     top: -10,
     borderWidth: 3,
     borderColor: 'rgba(255, 255, 255, 0.95)',
-    shadowColor: '#7c3aed',
+    shadowColor: '#FF6B3D',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

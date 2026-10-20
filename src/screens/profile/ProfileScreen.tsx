@@ -99,7 +99,7 @@ export const ProfileScreen = ({ navigation }: any) => {
       >
         <View style={styles.myGigsLeft}>
           <View style={styles.myGigsIconWrapper}>
-            <Ionicons name="briefcase" size={22} color="#7c3aed" />
+            <Ionicons name="briefcase" size={22} color="#FF6B3D" />
           </View>
           <View>
             <Text style={styles.myGigsTitle}>My Gigs & Applications</Text>
@@ -239,11 +239,11 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#2563eb',
+    shadowColor: '#103B31',
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   saveModalButton: {
     flex: 1.5,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
