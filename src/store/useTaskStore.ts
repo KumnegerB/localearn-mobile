@@ -34,6 +34,7 @@ interface TaskState {
   fetchReceivedApplications: () => Promise<void>;
   fetchCandidates: (taskId: number) => Promise<void>;
   applyForTask: (taskId: number, message?: string) => Promise<boolean>;
+  cancelApplication: (taskId: number, applicationId?: number) => Promise<boolean>;
   acceptCandidate: (applicationId: number) => Promise<boolean>;
 }
 
@@ -186,6 +187,30 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to apply for task' });
+      return false;
+    }
+  },
+
+  cancelApplication: async (taskId: number, applicationId?: number) => {
+    try {
+      if (applicationId) {
+        await apiClient.delete(`/tasks/applications/${applicationId}`);
+      } else {
+        await apiClient.delete(`/tasks/${taskId}/apply`);
+      }
+
+      set((state) => ({
+        currentTask:
+          state.currentTask?.id === taskId
+            ? { ...state.currentTask, has_applied: false }
+            : state.currentTask,
+        myAppliedTasks: state.myAppliedTasks.filter(
+          (a) => a.task_id !== taskId && (!applicationId || a.id !== applicationId)
+        ),
+      }));
+      return true;
+    } catch (err: any) {
+      set({ error: err.response?.data?.detail || 'Failed to cancel application' });
       return false;
     }
   },

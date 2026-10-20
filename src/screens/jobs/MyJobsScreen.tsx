@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useTaskStore } from '../../store/useTaskStore';
 import { TaskCard } from '../../components/task/TaskCard';
@@ -22,8 +23,31 @@ export const MyJobsScreen = ({ navigation }: any) => {
     myAppliedTasks,
     fetchMyPostedTasks,
     fetchMyAppliedTasks,
+    cancelApplication,
     isLoading,
   } = useTaskStore();
+
+  const handleWithdrawApplication = (taskId: number, applicationId: number, taskTitle: string) => {
+    Alert.alert(
+      'Withdraw Application',
+      `Cancel your application for "${taskTitle}"?`,
+      [
+        { text: 'Keep Application', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await cancelApplication(taskId, applicationId);
+            if (ok) {
+              Alert.alert('Application Withdrawn', 'Your application has been cancelled.');
+            } else {
+              Alert.alert('Notice', 'Unable to withdraw application.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     loadData();
@@ -269,6 +293,25 @@ export const MyJobsScreen = ({ navigation }: any) => {
                     </TouchableOpacity>
                   </View>
                 )}
+
+                {item.status === 'PENDING' && (
+                  <View style={styles.appActionRow}>
+                    <TouchableOpacity
+                      style={styles.withdrawBtn}
+                      activeOpacity={0.8}
+                      onPress={() =>
+                        handleWithdrawApplication(
+                          item.task_id,
+                          item.id,
+                          item.task?.title || `Gig #${item.task_id}`
+                        )
+                      }
+                    >
+                      <Ionicons name="close-circle-outline" size={14} color="#dc2626" style={{ marginRight: 4 }} />
+                      <Text style={styles.withdrawBtnText}>Withdraw Application</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           }}
@@ -496,6 +539,29 @@ const styles = StyleSheet.create({
   },
   contactPosterBtnText: {
     color: '#103B31',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  appActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 8,
+    marginTop: 8,
+  },
+  withdrawBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  withdrawBtnText: {
+    color: '#dc2626',
     fontSize: 12,
     fontWeight: '700',
   },

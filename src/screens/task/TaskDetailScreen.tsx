@@ -21,6 +21,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     currentTask,
     fetchTaskById,
     applyForTask,
+    cancelApplication,
     completeTask,
     isLoading,
     myAppliedTasks,
@@ -74,6 +75,30 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     } else {
       Alert.alert('Notice', 'You have already applied for this gig or the gig is no longer open.');
     }
+  };
+
+  const handleWithdrawPrompt = () => {
+    Alert.alert(
+      'Withdraw Application',
+      'Are you sure you want to cancel your application for this gig?',
+      [
+        { text: 'Keep Application', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: async () => {
+            setActionLoading(true);
+            const ok = await cancelApplication(currentTask.id);
+            setActionLoading(false);
+            if (ok) {
+              Alert.alert('Application Cancelled', 'You have successfully withdrawn your application.');
+            } else {
+              Alert.alert('Notice', 'Unable to withdraw application. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleComplete = async () => {
@@ -270,10 +295,18 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
           {!isCreator && currentTask.status === 'OPEN' && (
             hasApplied ? (
-              <View style={styles.appliedButton}>
+              <TouchableOpacity
+                style={styles.appliedButton}
+                onPress={handleWithdrawPrompt}
+                disabled={actionLoading}
+                activeOpacity={0.8}
+              >
                 <Ionicons name="checkmark-circle" size={18} color="#15803d" style={{ marginRight: 6 }} />
-                <Text style={styles.appliedButtonText}>Applied</Text>
-              </View>
+                <View style={styles.appliedTextCol}>
+                  <Text style={styles.appliedButtonText}>Applied</Text>
+                  <Text style={styles.appliedCancelHint}>Tap to withdraw</Text>
+                </View>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={styles.actionButton}
@@ -566,9 +599,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   appliedButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#15803d',
+    textAlign: 'center',
+  },
+  appliedTextCol: {
+    alignItems: 'center',
+  },
+  appliedCancelHint: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#16a34a',
+    marginTop: 1,
   },
   actionButton: {
     flex: 1.2,
