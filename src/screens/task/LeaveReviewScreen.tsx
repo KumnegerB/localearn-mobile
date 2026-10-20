@@ -54,11 +54,16 @@ export const LeaveReviewScreen = ({ route, navigation }: any) => {
       <TextInput
         style={styles.textArea}
         placeholder="Polite, punctual, and did great quality work!"
+        placeholderTextColor="#94a3b8"
         value={comment}
         onChangeText={setComment}
         multiline
         numberOfLines={4}
+        maxLength={500}
+        cursorColor="#7c3aed"
+        selectionColor="#ddd6fe"
       />
+      <Text style={styles.charCountText}>{comment.length}/500</Text>
 
       <TouchableOpacity
         style={styles.submitButton}
@@ -125,6 +130,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     height: 120,
     textAlignVertical: 'top',
+  },
+  charCountText: {
+    alignSelf: 'flex-end',
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 6,
   },
   submitButton: {
     backgroundColor: '#2563eb',

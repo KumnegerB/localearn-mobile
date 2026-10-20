@@ -14,6 +14,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
+import {
+  validateFullName,
+  validateEmail,
+  validatePhoneNumber,
+  validatePassword,
+} from '../../utils/validators';
+
+interface RegisterErrors {
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  password?: string;
+}
 
 export const RegisterScreen = ({ navigation }: any) => {
   const [fullName, setFullName] = useState('');
@@ -21,11 +34,55 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<RegisterErrors>({});
 
   const { register, isLoading, error } = useAuthStore();
 
+  const handleFullNameChange = (val: string) => {
+    setFullName(val);
+    if (errors.fullName) {
+      setErrors((prev) => ({ ...prev, fullName: undefined }));
+    }
+  };
+
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (errors.email) {
+      setErrors((prev) => ({ ...prev, email: undefined }));
+    }
+  };
+
+  const handlePhoneChange = (val: string) => {
+    setPhoneNumber(val);
+    if (errors.phoneNumber) {
+      setErrors((prev) => ({ ...prev, phoneNumber: undefined }));
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (errors.password) {
+      setErrors((prev) => ({ ...prev, password: undefined }));
+    }
+  };
+
   const handleRegister = async () => {
-    if (!fullName.trim() || !email.trim() || !password) return;
+    const nameErr = validateFullName(fullName);
+    const emailErr = validateEmail(email);
+    const phoneErr = validatePhoneNumber(phoneNumber);
+    const passErr = validatePassword(password, 6);
+
+    if (nameErr || emailErr || phoneErr || passErr) {
+      setErrors({
+        fullName: nameErr || undefined,
+        email: emailErr || undefined,
+        phoneNumber: phoneErr || undefined,
+        password: passErr || undefined,
+      });
+      return;
+    }
+
+    setErrors({});
     await register(fullName.trim(), email.trim(), password, phoneNumber.trim() || undefined);
   };
 
@@ -73,7 +130,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             </Text>
           </View>
 
-          {/* Error Banner */}
+          {/* Backend Error Banner */}
           {error ? (
             <View style={styles.errorBanner}>
               <Ionicons name="alert-circle" size={18} color="#dc2626" style={{ marginRight: 8 }} />
@@ -85,11 +142,11 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.form}>
             {/* Full Name */}
             <Text style={styles.inputLabel}>Full Name</Text>
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, !!errors.fullName && styles.inputBoxError]}>
               <Ionicons
                 name="person-outline"
                 size={20}
-                color="#7c3aed"
+                color={errors.fullName ? '#ef4444' : '#7c3aed'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -97,20 +154,26 @@ export const RegisterScreen = ({ navigation }: any) => {
                 placeholder="Alex Johnson"
                 placeholderTextColor="#94a3b8"
                 value={fullName}
-                onChangeText={setFullName}
+                onChangeText={handleFullNameChange}
                 autoCorrect={false}
                 cursorColor="#7c3aed"
                 selectionColor="#ddd6fe"
               />
             </View>
+            {errors.fullName ? (
+              <View style={styles.inlineErrorRow}>
+                <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                <Text style={styles.inlineErrorText}>{errors.fullName}</Text>
+              </View>
+            ) : null}
 
             {/* Email Address */}
             <Text style={styles.inputLabel}>Email Address</Text>
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, !!errors.email && styles.inputBoxError]}>
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color="#7c3aed"
+                color={errors.email ? '#ef4444' : '#7c3aed'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -118,7 +181,7 @@ export const RegisterScreen = ({ navigation }: any) => {
                 placeholder="name@example.com"
                 placeholderTextColor="#94a3b8"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -126,14 +189,20 @@ export const RegisterScreen = ({ navigation }: any) => {
                 selectionColor="#ddd6fe"
               />
             </View>
+            {errors.email ? (
+              <View style={styles.inlineErrorRow}>
+                <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                <Text style={styles.inlineErrorText}>{errors.email}</Text>
+              </View>
+            ) : null}
 
             {/* Phone Number (Optional) */}
             <Text style={styles.inputLabel}>Phone Number (Optional)</Text>
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, !!errors.phoneNumber && styles.inputBoxError]}>
               <Ionicons
                 name="call-outline"
                 size={20}
-                color="#7c3aed"
+                color={errors.phoneNumber ? '#ef4444' : '#7c3aed'}
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -141,29 +210,35 @@ export const RegisterScreen = ({ navigation }: any) => {
                 placeholder="+1 555-0199"
                 placeholderTextColor="#94a3b8"
                 value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                onChangeText={handlePhoneChange}
                 keyboardType="phone-pad"
                 autoCorrect={false}
                 cursorColor="#7c3aed"
                 selectionColor="#ddd6fe"
               />
             </View>
+            {errors.phoneNumber ? (
+              <View style={styles.inlineErrorRow}>
+                <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                <Text style={styles.inlineErrorText}>{errors.phoneNumber}</Text>
+              </View>
+            ) : null}
 
             {/* Password */}
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, !!errors.password && styles.inputBoxError]}>
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color="#7c3aed"
+                color={errors.password ? '#ef4444' : '#7c3aed'}
                 style={styles.fieldIcon}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Create a secure password"
+                placeholder="Create a password (min 6 chars)"
                 placeholderTextColor="#94a3b8"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -182,15 +257,18 @@ export const RegisterScreen = ({ navigation }: any) => {
                 />
               </TouchableOpacity>
             </View>
+            {errors.password ? (
+              <View style={styles.inlineErrorRow}>
+                <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                <Text style={styles.inlineErrorText}>{errors.password}</Text>
+              </View>
+            ) : null}
 
             {/* Submit Button */}
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                (!fullName.trim() || !email.trim() || !password) && styles.primaryButtonDisabled,
-              ]}
+              style={styles.primaryButton}
               onPress={handleRegister}
-              disabled={isLoading || !fullName.trim() || !email.trim() || !password}
+              disabled={isLoading}
               activeOpacity={0.85}
             >
               {isLoading ? (
@@ -322,6 +400,22 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 16,
   },
+  inputBoxError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  inlineErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -10,
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  inlineErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600',
+  },
   fieldIcon: {
     marginRight: 10,
   },
@@ -348,10 +442,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 5,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.65,
-    shadowOpacity: 0.1,
   },
   primaryButtonText: {
     color: '#ffffff',

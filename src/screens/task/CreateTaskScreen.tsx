@@ -9,12 +9,24 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useTaskStore } from '../../store/useTaskStore';
-
 import { SUPPORTED_CURRENCIES } from '../../utils/currency';
+import {
+  validateTaskTitle,
+  validateTaskDescription,
+  validateBudget,
+} from '../../utils/validators';
 
 const CATEGORIES = ['Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tech Help', 'General'];
+
+interface TaskFormErrors {
+  title?: string;
+  budget?: string;
+  description?: string;
+  location?: string;
+}
 
 export const CreateTaskScreen = ({ navigation }: any) => {
   const [title, setTitle] = useState('');
@@ -25,6 +37,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
   const [locationName, setLocationName] = useState('');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
+  const [errors, setErrors] = useState<TaskFormErrors>({});
 
   const { createTask, isLoading } = useTaskStore();
 
@@ -52,17 +65,52 @@ export const CreateTaskScreen = ({ navigation }: any) => {
     })();
   }, []);
 
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
+    if (errors.title) {
+      setErrors((prev) => ({ ...prev, title: undefined }));
+    }
+  };
+
+  const handleBudgetChange = (val: string) => {
+    setBudget(val);
+    if (errors.budget) {
+      setErrors((prev) => ({ ...prev, budget: undefined }));
+    }
+  };
+
+  const handleLocationChange = (val: string) => {
+    setLocationName(val);
+    if (errors.location) {
+      setErrors((prev) => ({ ...prev, location: undefined }));
+    }
+  };
+
+  const handleDescriptionChange = (val: string) => {
+    setDescription(val);
+    if (errors.description) {
+      setErrors((prev) => ({ ...prev, description: undefined }));
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!title.trim() || !description.trim() || !budget.trim()) {
-      Alert.alert('Required Fields', 'Please complete title, description, and budget.');
+    const titleErr = validateTaskTitle(title);
+    const budgetErr = validateBudget(budget);
+    const descErr = validateTaskDescription(description);
+    const locationErr = !locationName.trim() ? 'Please provide a neighborhood or address area.' : null;
+
+    if (titleErr || budgetErr || descErr || locationErr) {
+      setErrors({
+        title: titleErr || undefined,
+        budget: budgetErr || undefined,
+        description: descErr || undefined,
+        location: locationErr || undefined,
+      });
       return;
     }
 
-    const numBudget = parseFloat(budget);
-    if (isNaN(numBudget) || numBudget <= 0) {
-      Alert.alert('Invalid Budget', 'Please enter a valid amount.');
-      return;
-    }
+    setErrors({});
+    const numBudget = parseFloat(budget.trim());
 
     const task = await createTask({
       title: title.trim(),
@@ -76,22 +124,37 @@ export const CreateTaskScreen = ({ navigation }: any) => {
     });
 
     if (task) {
-      Alert.alert('Task Posted!', 'Your task is now visible to nearby neighbors.', [
+      Alert.alert('Task Posted! 🎉', 'Your task is now visible to nearby neighbors.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Task Title */}
       <Text style={styles.label}>Task Title</Text>
       <TextInput
-        style={styles.input}
-        placeholder="e.g. Help moving a heavy sofa"
+        style={[styles.input, !!errors.title && styles.inputError]}
+        placeholder="e.g. Help assembling bookshelf & desk"
+        placeholderTextColor="#94a3b8"
         value={title}
-        onChangeText={setTitle}
+        onChangeText={handleTitleChange}
+        cursorColor="#7c3aed"
+        selectionColor="#ddd6fe"
       />
+      {errors.title ? (
+        <View style={styles.inlineErrorRow}>
+          <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+          <Text style={styles.inlineErrorText}>{errors.title}</Text>
+        </View>
+      ) : null}
 
+      {/* Category */}
       <Text style={styles.label}>Category</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
         {CATEGORIES.map((cat) => (
@@ -99,6 +162,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
             key={cat}
             style={[styles.catPill, category === cat && styles.activeCatPill]}
             onPress={() => setCategory(cat)}
+            activeOpacity={0.7}
           >
             <Text style={[styles.catText, category === cat && styles.activeCatText]}>
               {cat}
@@ -107,6 +171,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         ))}
       </ScrollView>
 
+      {/* Currency */}
       <Text style={styles.label}>Select Currency</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
         {SUPPORTED_CURRENCIES.map((curr) => (
@@ -114,6 +179,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
             key={curr.code}
             style={[styles.catPill, currency === curr.code && styles.activeCatPill]}
             onPress={() => setCurrency(curr.code)}
+            activeOpacity={0.7}
           >
             <Text style={[styles.catText, currency === curr.code && styles.activeCatText]}>
               {curr.label}
@@ -122,37 +188,69 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         ))}
       </ScrollView>
 
+      {/* Budget */}
       <Text style={styles.label}>Budget Amount</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, !!errors.budget && styles.inputError]}
         placeholder="e.g. 50"
+        placeholderTextColor="#94a3b8"
         value={budget}
-        onChangeText={setBudget}
+        onChangeText={handleBudgetChange}
         keyboardType="numeric"
+        cursorColor="#7c3aed"
+        selectionColor="#ddd6fe"
       />
+      {errors.budget ? (
+        <View style={styles.inlineErrorRow}>
+          <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+          <Text style={styles.inlineErrorText}>{errors.budget}</Text>
+        </View>
+      ) : null}
 
+      {/* Location */}
       <Text style={styles.label}>Location / Neighborhood</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, !!errors.location && styles.inputError]}
         placeholder="e.g. Maple Street & 4th Ave"
+        placeholderTextColor="#94a3b8"
         value={locationName}
-        onChangeText={setLocationName}
+        onChangeText={handleLocationChange}
+        cursorColor="#7c3aed"
+        selectionColor="#ddd6fe"
       />
+      {errors.location ? (
+        <View style={styles.inlineErrorRow}>
+          <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+          <Text style={styles.inlineErrorText}>{errors.location}</Text>
+        </View>
+      ) : null}
 
+      {/* Description */}
       <Text style={styles.label}>Description & Details</Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Describe what help you need, time required, and any tools provided..."
+        style={[styles.input, styles.textArea, !!errors.description && styles.inputError]}
+        placeholder="Describe what help you need, tools provided, estimated time..."
+        placeholderTextColor="#94a3b8"
         value={description}
-        onChangeText={setDescription}
+        onChangeText={handleDescriptionChange}
         multiline
         numberOfLines={4}
+        cursorColor="#7c3aed"
+        selectionColor="#ddd6fe"
       />
+      {errors.description ? (
+        <View style={styles.inlineErrorRow}>
+          <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+          <Text style={styles.inlineErrorText}>{errors.description}</Text>
+        </View>
+      ) : null}
 
+      {/* Submit Button */}
       <TouchableOpacity
         style={styles.submitButton}
         onPress={handleSubmit}
         disabled={isLoading || loadingLocation}
+        activeOpacity={0.85}
       >
         {isLoading || loadingLocation ? (
           <ActivityIndicator color="#fff" />
@@ -178,34 +276,50 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1e293b',
     marginBottom: 6,
-    marginTop: 12,
+    marginTop: 14,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     backgroundColor: '#f8fafc',
+    color: '#0f172a',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  inlineErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  inlineErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600',
   },
   textArea: {
-    height: 100,
+    height: 110,
     textAlignVertical: 'top',
   },
   catScroll: {
     flexDirection: 'row',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   catPill: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 9,
+    borderRadius: 10,
     backgroundColor: '#f1f5f9',
     marginRight: 8,
   },
   activeCatPill: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#7c3aed',
   },
   catText: {
     fontSize: 13,
@@ -216,16 +330,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   submitButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
+    backgroundColor: '#7c3aed',
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 28,
+    shadowColor: '#7c3aed',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
   submitButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
-

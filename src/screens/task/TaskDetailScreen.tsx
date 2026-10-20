@@ -230,11 +230,16 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
             <TextInput
               style={styles.modalInput}
               placeholder="e.g. Hi! I'm available today at 3pm and have all the tools needed..."
+              placeholderTextColor="#94a3b8"
               value={applyMessage}
               onChangeText={setApplyMessage}
               multiline
               numberOfLines={4}
+              maxLength={300}
+              cursorColor="#7c3aed"
+              selectionColor="#ddd6fe"
             />
+            <Text style={styles.charCountText}>{applyMessage.length}/300</Text>
 
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
@@ -495,6 +500,12 @@ const styles = StyleSheet.create({
     height: 110,
     textAlignVertical: 'top',
     color: '#0f172a',
+  },
+  charCountText: {
+    alignSelf: 'flex-end',
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 6,
   },
   modalButtonRow: {
     flexDirection: 'row',

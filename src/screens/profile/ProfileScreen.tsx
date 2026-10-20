@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
+import { validateFullName } from '../../utils/validators';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
@@ -21,19 +22,28 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [bio, setBio] = useState(user?.bio || '');
   const [skills, setSkills] = useState(user?.skills || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const handleOpenEdit = () => {
     setFullName(user?.full_name || '');
     setBio(user?.bio || '');
     setSkills(user?.skills || '');
+    setNameError(null);
     setIsEditing(true);
   };
 
+  const handleFullNameChange = (val: string) => {
+    setFullName(val);
+    if (nameError) setNameError(null);
+  };
+
   const handleSaveProfile = async () => {
-    if (!fullName.trim()) {
-      Alert.alert('Required', 'Name cannot be empty.');
+    const err = validateFullName(fullName);
+    if (err) {
+      setNameError(err);
       return;
     }
+    setNameError(null);
 
     setIsSaving(true);
     const success = await updateProfile({
@@ -139,14 +149,23 @@ export const ProfileScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.modalScroll}>
+            <ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <Text style={styles.inputLabel}>Full Name</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, !!nameError && styles.inputError]}
                 value={fullName}
-                onChangeText={setFullName}
+                onChangeText={handleFullNameChange}
                 placeholder="Your full name"
+                placeholderTextColor="#94a3b8"
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
+              {nameError ? (
+                <View style={styles.inlineErrorRow}>
+                  <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                  <Text style={styles.inlineErrorText}>{nameError}</Text>
+                </View>
+              ) : null}
 
               <Text style={styles.inputLabel}>About Me (Bio)</Text>
               <TextInput
@@ -154,8 +173,11 @@ export const ProfileScreen = ({ navigation }: any) => {
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Tell neighbors a bit about yourself..."
+                placeholderTextColor="#94a3b8"
                 multiline
                 numberOfLines={3}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
 
               <Text style={styles.inputLabel}>Skills & Offers</Text>
@@ -164,8 +186,11 @@ export const ProfileScreen = ({ navigation }: any) => {
                 value={skills}
                 onChangeText={setSkills}
                 placeholder="e.g. Lawn mowing, Furniture assembly, Dog walking, Math tutoring"
+                placeholderTextColor="#94a3b8"
                 multiline
                 numberOfLines={3}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
 
               <View style={styles.modalButtonRow}>
@@ -381,13 +406,28 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: '#f8fafc',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     color: '#0f172a',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  inlineErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  inlineErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600',
   },
   textArea: {
     height: 80,
