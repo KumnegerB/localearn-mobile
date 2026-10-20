@@ -93,8 +93,13 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
             style={styles.headerProfileTouchable}
             activeOpacity={0.7}
             onPress={() => {
-              if (taskId) {
-                navigation.navigate('TaskDetail', { taskId });
+              if (otherUser?.id) {
+                navigation.navigate('UserProfile', {
+                  userId: otherUser.id,
+                  user: otherUser,
+                  taskId,
+                  taskTitle,
+                });
               }
             }}
           >

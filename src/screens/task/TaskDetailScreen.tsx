@@ -134,7 +134,18 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           <>
             <View style={styles.divider} />
             <Text style={styles.sectionHeader}>Posted By</Text>
-            <View style={styles.userCard}>
+            <TouchableOpacity
+              style={styles.userCard}
+              activeOpacity={0.7}
+              onPress={() =>
+                navigation.navigate('UserProfile', {
+                  userId: currentTask.creator!.id,
+                  user: currentTask.creator,
+                  taskId: currentTask.id,
+                  taskTitle: currentTask.title,
+                })
+              }
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
                   {currentTask.creator?.full_name?.charAt(0) || 'U'}
@@ -148,7 +159,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
                     : '0 reviews'}
                 </Text>
               </View>
-            </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </TouchableOpacity>
           </>
         )}
 
@@ -158,19 +170,33 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
             <View style={styles.divider} />
             <Text style={styles.sectionHeader}>Assigned Helper</Text>
             <View style={styles.assignedUserCard}>
-              <View style={styles.helperAvatar}>
-                <Text style={styles.helperAvatarText}>
-                  {currentTask.helper?.full_name?.charAt(0) || 'H'}
-                </Text>
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{currentTask.helper?.full_name || 'Helper'}</Text>
-                <Text style={styles.userRating}>
-                  {currentTask.helper?.rating_count && currentTask.helper.rating_count > 0
-                    ? `★ ${currentTask.helper.rating.toFixed(1)} (${currentTask.helper.rating_count} reviews)`
-                    : '★ New Helper'}
-                </Text>
-              </View>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                activeOpacity={0.7}
+                onPress={() =>
+                  navigation.navigate('UserProfile', {
+                    userId: currentTask.helper!.id,
+                    user: currentTask.helper,
+                    taskId: currentTask.id,
+                    taskTitle: currentTask.title,
+                  })
+                }
+              >
+                <View style={styles.helperAvatar}>
+                  <Text style={styles.helperAvatarText}>
+                    {currentTask.helper?.full_name?.charAt(0) || 'H'}
+                  </Text>
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{currentTask.helper?.full_name || 'Helper'}</Text>
+                  <Text style={styles.userRating}>
+                    {currentTask.helper?.rating_count && currentTask.helper.rating_count > 0
+                      ? `★ ${currentTask.helper.rating.toFixed(1)} (${currentTask.helper.rating_count} reviews)`
+                      : '★ New Helper'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#94a3b8" style={{ marginRight: 8 }} />
+              </TouchableOpacity>
               {isCreator && (
                 <TouchableOpacity
                   style={styles.chatHelperButton}

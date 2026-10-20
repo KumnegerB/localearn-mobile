@@ -22,6 +22,7 @@ import { CreateTaskScreen } from '../screens/task/CreateTaskScreen';
 import { ChatRoomScreen } from '../screens/chat/ChatRoomScreen';
 import { LeaveReviewScreen } from '../screens/task/LeaveReviewScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { UserProfileScreen } from '../screens/profile/UserProfileScreen';
 import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNavbar';
 
 const Stack = createNativeStackNavigator();
@@ -152,6 +153,11 @@ export const AppNavigator = () => {
               name="LeaveReview"
               component={LeaveReviewScreen}
               options={{ title: 'Leave Review' }}
+            />
+            <Stack.Screen
+              name="UserProfile"
+              component={UserProfileScreen}
+              options={{ headerShown: false }}
             />
           </>
         ) : (

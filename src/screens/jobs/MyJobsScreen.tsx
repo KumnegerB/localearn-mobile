@@ -118,7 +118,18 @@ export const MyJobsScreen = ({ navigation }: any) => {
                 <View style={styles.postedActionRow}>
                   {isAssignedOrDone && item.helper ? (
                     <View style={styles.assignedHelperBox}>
-                      <View style={styles.assignedHelperLeft}>
+                      <TouchableOpacity
+                        style={styles.assignedHelperLeft}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          navigation.navigate('UserProfile', {
+                            userId: item.helper!.id,
+                            user: item.helper,
+                            taskId: item.id,
+                            taskTitle: item.title,
+                          })
+                        }
+                      >
                         <View style={styles.helperAvatarSmall}>
                           <Text style={styles.helperAvatarTextSmall}>
                             {item.helper.full_name?.charAt(0) || 'H'}
@@ -130,7 +141,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
                             {item.helper.full_name}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
 
                       <TouchableOpacity
                         style={styles.chatHelperButton}
@@ -227,9 +238,22 @@ export const MyJobsScreen = ({ navigation }: any) => {
 
                 {item.task && item.task.creator && (
                   <View style={styles.appFooter}>
-                    <Text style={styles.postedByText}>
-                      Posted by: {item.task.creator.full_name}
-                    </Text>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={{ flex: 1 }}
+                      onPress={() =>
+                        navigation.navigate('UserProfile', {
+                          userId: item.task!.creator!.id,
+                          user: item.task!.creator,
+                          taskId: item.task!.id,
+                          taskTitle: item.task!.title,
+                        })
+                      }
+                    >
+                      <Text style={styles.postedByText} numberOfLines={1}>
+                        Posted by: {item.task.creator.full_name}
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.contactPosterBtn}
                       onPress={() =>

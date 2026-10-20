@@ -74,20 +74,35 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
             return (
               <View style={styles.candidateCard}>
                 <View style={styles.candidateTop}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {applicant?.full_name?.charAt(0) || 'U'}
-                    </Text>
-                  </View>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      if (applicant?.id) {
+                        navigation.navigate('UserProfile', {
+                          userId: applicant.id,
+                          user: applicant,
+                          taskId,
+                          taskTitle,
+                        });
+                      }
+                    }}
+                  >
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {applicant?.full_name?.charAt(0) || 'U'}
+                      </Text>
+                    </View>
 
-                  <View style={styles.candidateInfo}>
-                    <Text style={styles.candidateName}>{applicant?.full_name || 'Applicant'}</Text>
-                    <Text style={styles.candidateRating}>
-                      {applicant?.rating_count && applicant.rating_count > 0
-                        ? `★ ${applicant.rating.toFixed(1)} (${applicant.rating_count} reviews)`
-                        : '0 reviews'}
-                    </Text>
-                  </View>
+                    <View style={styles.candidateInfo}>
+                      <Text style={styles.candidateName}>{applicant?.full_name || 'Applicant'}</Text>
+                      <Text style={styles.candidateRating}>
+                        {applicant?.rating_count && applicant.rating_count > 0
+                          ? `★ ${applicant.rating.toFixed(1)} (${applicant.rating_count} reviews)`
+                          : '0 reviews'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
 
                   <View
                     style={[
