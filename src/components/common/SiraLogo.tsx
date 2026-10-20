@@ -44,3 +44,4 @@ export const SiraLogo: React.FC<SiraLogoProps> = ({
     </Svg>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,10 @@ export const LoginScreen = ({ navigation }: any) => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const { login, isLoading, error } = useAuthStore();
+
+  useEffect(() => {
+    useAuthStore.setState({ error: null });
+  }, []);
 
   const handleEmailChange = (val: string) => {
     setEmail(val);

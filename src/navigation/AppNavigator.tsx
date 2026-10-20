@@ -72,7 +72,7 @@ function MainTabs() {
 }
 
 export const AppNavigator = () => {
-  const { user, isLoading, checkAuth } = useAuthStore();
+  const { user, isCheckingAuth, checkAuth } = useAuthStore();
   const fetchConversations = useChatStore((s) => s.fetchConversations);
 
   useEffect(() => {
@@ -103,10 +103,10 @@ export const AppNavigator = () => {
     };
   }, [user?.id]);
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <ActivityIndicator size="large" color="#103B31" />
       </View>
     );
   }

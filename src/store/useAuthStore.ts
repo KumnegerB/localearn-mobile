@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  isCheckingAuth: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (fullName: string, email: string, password: string, phoneNumber?: string) => Promise<boolean>;
@@ -18,7 +19,8 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
-  isLoading: true,
+  isLoading: false,
+  isCheckingAuth: true,
   error: null,
 
   login: async (email, password) => {
@@ -27,7 +29,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
       const { access_token, user } = response.data;
       await AsyncStorage.setItem('@localearn_token', access_token);
-      set({ token: access_token, user, isLoading: false });
+      set({ token: access_token, user, isLoading: false, error: null });
       return true;
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'Failed to sign in. Please verify your credentials.';
@@ -47,7 +49,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       const { access_token, user } = response.data;
       await AsyncStorage.setItem('@localearn_token', access_token);
-      set({ token: access_token, user, isLoading: false });
+      set({ token: access_token, user, isLoading: false, error: null });
       return true;
     } catch (err: any) {
       console.error('Registration failed:', err.response?.data || err.message || err);
@@ -72,18 +74,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
-    set({ isLoading: true });
+    set({ isCheckingAuth: true });
     try {
       const token = await AsyncStorage.getItem('@localearn_token');
       if (token) {
         const response = await apiClient.get<User>('/users/me');
-        set({ token, user: response.data, isLoading: false });
+        set({ token, user: response.data, isCheckingAuth: false });
       } else {
-        set({ user: null, token: null, isLoading: false });
+        set({ user: null, token: null, isCheckingAuth: false });
       }
     } catch (error) {
       await AsyncStorage.removeItem('@localearn_token');
-      set({ user: null, token: null, isLoading: false });
+      set({ user: null, token: null, isCheckingAuth: false });
     }
   },
 
@@ -98,4 +100,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
-

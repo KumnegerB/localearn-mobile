@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,10 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [errors, setErrors] = useState<RegisterErrors>({});
 
   const { register, isLoading, error } = useAuthStore();
+
+  useEffect(() => {
+    useAuthStore.setState({ error: null });
+  }, []);
 
   const handleFullNameChange = (val: string) => {
     setFullName(val);
