@@ -146,9 +146,7 @@ export const AppNavigator = () => {
             <Stack.Screen
               name="ChatRoom"
               component={ChatRoomScreen}
-              options={({ route }: any) => ({
-                title: route.params?.taskTitle || 'Task Chat',
-              })}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="LeaveReview"
