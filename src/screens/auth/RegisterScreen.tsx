@@ -9,9 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -21,11 +21,6 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  const [nameFocused, setNameFocused] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [phoneFocused, setPhoneFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const { register, isLoading, error } = useAuthStore();
 
@@ -90,11 +85,11 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.form}>
             {/* Full Name */}
             <Text style={styles.inputLabel}>Full Name</Text>
-            <View style={[styles.inputBox, nameFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="person-outline"
                 size={20}
-                color={nameFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -103,18 +98,19 @@ export const RegisterScreen = ({ navigation }: any) => {
                 placeholderTextColor="#94a3b8"
                 value={fullName}
                 onChangeText={setFullName}
-                onFocus={() => setNameFocused(true)}
-                onBlur={() => setNameFocused(false)}
+                autoCorrect={false}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
             </View>
 
             {/* Email Address */}
             <Text style={styles.inputLabel}>Email Address</Text>
-            <View style={[styles.inputBox, emailFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color={emailFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -126,18 +122,18 @@ export const RegisterScreen = ({ navigation }: any) => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
             </View>
 
             {/* Phone Number (Optional) */}
             <Text style={styles.inputLabel}>Phone Number (Optional)</Text>
-            <View style={[styles.inputBox, phoneFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="call-outline"
                 size={20}
-                color={phoneFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -147,18 +143,19 @@ export const RegisterScreen = ({ navigation }: any) => {
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
-                onFocus={() => setPhoneFocused(true)}
-                onBlur={() => setPhoneFocused(false)}
+                autoCorrect={false}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
             </View>
 
             {/* Password */}
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={[styles.inputBox, passwordFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={passwordFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -168,18 +165,20 @@ export const RegisterScreen = ({ navigation }: any) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
+                autoCapitalize="none"
+                autoCorrect={false}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#94a3b8"
+                  color="#64748b"
                 />
               </TouchableOpacity>
             </View>
@@ -227,17 +226,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
-    justifyContent: 'space-between',
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   backButton: {
     width: 42,
@@ -325,15 +322,6 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 16,
   },
-  inputBoxFocused: {
-    borderColor: '#7c3aed',
-    backgroundColor: '#ffffff',
-    shadowColor: '#7c3aed',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
-  },
   fieldIcon: {
     marginRight: 10,
   },
@@ -342,9 +330,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0f172a',
     height: '100%',
+    paddingVertical: 0,
   },
   eyeButton: {
-    padding: 4,
+    padding: 6,
   },
   primaryButton: {
     flexDirection: 'row',

@@ -9,9 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -19,8 +19,6 @@ export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const { login, isLoading, error } = useAuthStore();
 
@@ -85,11 +83,11 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.form}>
             {/* Email Field */}
             <Text style={styles.inputLabel}>Email Address</Text>
-            <View style={[styles.inputBox, emailFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color={emailFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -101,18 +99,18 @@ export const LoginScreen = ({ navigation }: any) => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
             </View>
 
             {/* Password Field */}
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={[styles.inputBox, passwordFocused && styles.inputBoxFocused]}>
+            <View style={styles.inputBox}>
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color={passwordFocused ? '#7c3aed' : '#94a3b8'}
+                color="#7c3aed"
                 style={styles.fieldIcon}
               />
               <TextInput
@@ -122,18 +120,20 @@ export const LoginScreen = ({ navigation }: any) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
+                autoCapitalize="none"
+                autoCorrect={false}
+                cursorColor="#7c3aed"
+                selectionColor="#ddd6fe"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#94a3b8"
+                  color="#64748b"
                 />
               </TouchableOpacity>
             </View>
@@ -181,17 +181,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
-    justifyContent: 'space-between',
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   backButton: {
     width: 42,
@@ -279,15 +277,6 @@ const styles = StyleSheet.create({
     height: 52,
     marginBottom: 18,
   },
-  inputBoxFocused: {
-    borderColor: '#7c3aed',
-    backgroundColor: '#ffffff',
-    shadowColor: '#7c3aed',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
-  },
   fieldIcon: {
     marginRight: 10,
   },
@@ -296,9 +285,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0f172a',
     height: '100%',
+    paddingVertical: 0,
   },
   eyeButton: {
-    padding: 4,
+    padding: 6,
   },
   primaryButton: {
     flexDirection: 'row',
