@@ -7,19 +7,33 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
+import { Ionicons } from '@expo/vector-icons';
 
 export const TaskDetailScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
-  const { currentTask, fetchTaskById, acceptTask, completeTask, isLoading } = useTaskStore();
+  const {
+    currentTask,
+    fetchTaskById,
+    applyForTask,
+    completeTask,
+    isLoading,
+    myAppliedTasks,
+    fetchMyAppliedTasks,
+  } = useTaskStore();
   const { user } = useAuthStore();
   const [actionLoading, setActionLoading] = useState(false);
+  const [applyModalVisible, setApplyModalVisible] = useState(false);
+  const [applyMessage, setApplyMessage] = useState('');
 
   useEffect(() => {
     fetchTaskById(taskId);
+    fetchMyAppliedTasks();
   }, [taskId]);
 
   if (isLoading || !currentTask) {
@@ -32,22 +46,30 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
   const isCreator = user?.id === currentTask.creator_id;
   const isHelper = user?.id === currentTask.helper_id;
+  const hasApplied =
+    Boolean(currentTask.has_applied) ||
+    myAppliedTasks.some((app) => app.task_id === currentTask.id);
 
-  const handleAccept = async () => {
-    Alert.alert('Accept Task', 'Are you ready to take on this gig?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Accept',
-        onPress: async () => {
-          setActionLoading(true);
-          const ok = await acceptTask(taskId);
-          setActionLoading(false);
-          if (ok) {
-            Alert.alert('Success', 'You are now assigned to this task!');
-          }
-        },
-      },
-    ]);
+  const handleApply = async () => {
+    if (hasApplied) {
+      Alert.alert('Notice', 'You have already applied for this gig.');
+      setApplyModalVisible(false);
+      return;
+    }
+    setActionLoading(true);
+    const ok = await applyForTask(taskId, applyMessage.trim() || undefined);
+    setActionLoading(false);
+    if (ok) {
+      setApplyModalVisible(false);
+      setApplyMessage('');
+      Alert.alert(
+        'Application Sent!',
+        'Your application and note have been sent to the poster. You can also message them directly from My Jobs.',
+        [{ text: 'OK' }]
+      );
+    } else {
+      Alert.alert('Notice', 'You have already applied for this gig or the gig is no longer open.');
+    }
   };
 
   const handleComplete = async () => {
@@ -126,30 +148,53 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
       {/* Action Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={styles.chatButton}
-          onPress={() =>
-            navigation.navigate('ChatRoom', {
-              taskId: currentTask.id,
-              taskTitle: currentTask.title,
-            })
-          }
-        >
-          <Text style={styles.chatButtonText}>💬 Chat</Text>
-        </TouchableOpacity>
+        {!isCreator && currentTask.creator && (
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() =>
+              navigation.navigate('ChatRoom', {
+                taskId: currentTask.id,
+                taskTitle: currentTask.title,
+                otherUser: currentTask.creator,
+              })
+            }
+          >
+            <Ionicons name="chatbubbles-outline" size={18} color="#2563eb" style={{ marginRight: 6 }} />
+            <Text style={styles.chatButtonText}>Message Poster</Text>
+          </TouchableOpacity>
+        )}
+
+        {isCreator && (
+          <TouchableOpacity
+            style={styles.candidatesButton}
+            onPress={() =>
+              navigation.navigate('TaskCandidates', {
+                taskId: currentTask.id,
+                taskTitle: currentTask.title,
+              })
+            }
+          >
+            <Ionicons name="people-outline" size={18} color="#2563eb" style={{ marginRight: 6 }} />
+            <Text style={styles.candidatesButtonText}>View Candidates</Text>
+          </TouchableOpacity>
+        )}
 
         {!isCreator && currentTask.status === 'OPEN' && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleAccept}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.actionButtonText}>Accept Gig</Text>
-            )}
-          </TouchableOpacity>
+          hasApplied ? (
+            <View style={styles.appliedButton}>
+              <Ionicons name="checkmark-circle" size={18} color="#15803d" style={{ marginRight: 6 }} />
+              <Text style={styles.appliedButtonText}>Applied</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setApplyModalVisible(true)}
+              disabled={actionLoading}
+            >
+              <Ionicons name="hand-right-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.actionButtonText}>Apply for Gig</Text>
+            </TouchableOpacity>
+          )
         )}
 
         {isCreator && currentTask.status === 'ASSIGNED' && (
@@ -166,6 +211,56 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Apply Modal */}
+      <Modal visible={applyModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Apply for this Gig</Text>
+              <TouchableOpacity onPress={() => setApplyModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              Include a brief message about your availability and why you're a great fit:
+            </Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="e.g. Hi! I'm available today at 3pm and have all the tools needed..."
+              value={applyMessage}
+              onChangeText={setApplyMessage}
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={styles.cancelModalBtn}
+                onPress={() => setApplyModalVisible(false)}
+              >
+                <Text style={styles.cancelModalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.submitApplyBtn, hasApplied && { backgroundColor: '#94a3b8' }]}
+                onPress={handleApply}
+                disabled={actionLoading || hasApplied}
+              >
+                {actionLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.submitApplyBtnText}>
+                    {hasApplied ? 'Already Applied' : 'Send Application'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -298,22 +393,60 @@ const styles = StyleSheet.create({
   },
   chatButton: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    flexDirection: 'row',
+    backgroundColor: '#eff6ff',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
   chatButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563eb',
+  },
+  candidatesButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#eff6ff',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  candidatesButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563eb',
+  },
+  appliedButton: {
+    flex: 1.2,
+    flexDirection: 'row',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appliedButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#334155',
+    color: '#15803d',
   },
   actionButton: {
-    flex: 2,
+    flex: 1.2,
+    flexDirection: 'row',
     backgroundColor: '#2563eb',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   completeButton: {
     backgroundColor: '#059669',
@@ -322,6 +455,75 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#ffffff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 34,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  modalInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    height: 110,
+    textAlignVertical: 'top',
+    color: '#0f172a',
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 18,
+  },
+  cancelModalBtn: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  cancelModalBtnText: {
+    color: '#64748b',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  submitApplyBtn: {
+    flex: 1.5,
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submitApplyBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
   },
 });
 

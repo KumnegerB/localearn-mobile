@@ -81,6 +81,24 @@ export const ProfileScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
+      {/* My Gigs Management Section */}
+      <TouchableOpacity
+        style={styles.myGigsCard}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('MyJobs')}
+      >
+        <View style={styles.myGigsLeft}>
+          <View style={styles.myGigsIconWrapper}>
+            <Ionicons name="briefcase" size={22} color="#7c3aed" />
+          </View>
+          <View>
+            <Text style={styles.myGigsTitle}>My Gigs & Applications</Text>
+            <Text style={styles.myGigsSubtitle}>Jobs you posted and gigs you applied for</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+      </TouchableOpacity>
+
       {/* Info Sections */}
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
@@ -186,7 +204,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   header: {
     alignItems: 'center',
@@ -242,6 +260,46 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontSize: 13,
     fontWeight: '700',
+  },
+  myGigsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ede9fe',
+    shadowColor: '#7c3aed',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  myGigsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  myGigsIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f5f3ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  myGigsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1e1b4b',
+  },
+  myGigsSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 2,
   },
   section: {
     backgroundColor: '#ffffff',

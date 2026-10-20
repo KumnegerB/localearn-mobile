@@ -32,6 +32,7 @@ export interface Task {
   created_at: string;
   updated_at?: string;
   distance_km?: number | null;
+  has_applied?: boolean;
 }
 
 export interface Review {
@@ -45,10 +46,24 @@ export interface Review {
   reviewer?: User;
 }
 
+export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+export interface TaskApplication {
+  id: number;
+  task_id: number;
+  applicant_id: number;
+  message?: string | null;
+  status: ApplicationStatus;
+  created_at: string;
+  applicant?: User;
+  task?: Task;
+}
+
 export interface Message {
   id: number;
   task_id: number;
   sender_id: number;
+  receiver_id?: number | null;
   content: string;
   is_read: boolean;
   created_at: string;
@@ -57,6 +72,24 @@ export interface Message {
     full_name: string;
     avatar_url?: string | null;
   };
+}
+
+export interface Conversation {
+  task_id: number;
+  task_title: string;
+  other_user: User;
+  last_message: Message;
+  unread_count: number;
+}
+
+export interface InAppNotification {
+  id: string;
+  title: string;
+  senderName: string;
+  message: string;
+  taskId: number;
+  taskTitle: string;
+  otherUser: User;
 }
 
 export interface AuthResponse {

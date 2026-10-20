@@ -88,15 +88,6 @@ export const TaskListScreen = ({ navigation }: any) => {
           }
         />
       )}
-
-      {/* Floating Action Button to post task */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreateTask')}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.fabIcon}>+</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -135,7 +126,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 110,
   },
   centerContainer: {
     flex: 1,

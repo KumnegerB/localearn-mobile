@@ -1,47 +1,40 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useAuthStore } from '../store/useAuthStore';
+import { useChatStore } from '../store/useChatStore';
+import { navigationRef } from './navigationRef';
+import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { TaskListScreen } from '../screens/explore/TaskListScreen';
 import { TaskMapScreen } from '../screens/explore/TaskMapScreen';
+import { MyJobsScreen } from '../screens/jobs/MyJobsScreen';
+import { TaskCandidatesScreen } from '../screens/jobs/TaskCandidatesScreen';
+import { InboxScreen } from '../screens/chat/InboxScreen';
 import { TaskDetailScreen } from '../screens/task/TaskDetailScreen';
 import { CreateTaskScreen } from '../screens/task/CreateTaskScreen';
 import { ChatRoomScreen } from '../screens/chat/ChatRoomScreen';
 import { LeaveReviewScreen } from '../screens/task/LeaveReviewScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNavbar';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-import { Ionicons } from '@expo/vector-icons';
-
-// Bottom tabs for explore, map, and profile
+// Bottom tabs for Explore (Home), Map (Search), Inbox, and Profile
+// (Center slot is the floating action plus button, My Jobs moved inside Profile & Stack)
 function MainTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#94a3b8',
+      tabBar={(props) => <FloatingBottomNavbar {...props} />}
+      screenOptions={{
+        headerShown: true,
         headerTitleStyle: { fontWeight: '700' },
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'help-circle-outline';
-
-          if (route.name === 'Explore') {
-            iconName = focused ? 'briefcase' : 'briefcase-outline';
-          } else if (route.name === 'Map') {
-            iconName = focused ? 'map' : 'map-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-      })}
+      }}
     >
       <Tab.Screen
         name="Explore"
@@ -54,6 +47,11 @@ function MainTabs() {
         options={{ title: 'Nearby Map' }}
       />
       <Tab.Screen
+        name="Inbox"
+        component={InboxScreen}
+        options={{ title: 'Messages' }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: 'My Profile' }}
@@ -64,10 +62,35 @@ function MainTabs() {
 
 export const AppNavigator = () => {
   const { user, isLoading, checkAuth } = useAuthStore();
+  const fetchConversations = useChatStore((s) => s.fetchConversations);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Background polling for conversations & incoming message notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    fetchConversations(user.id);
+
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') {
+        fetchConversations(user.id);
+      }
+    }, 6000);
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        fetchConversations(user.id);
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [user?.id]);
 
   if (isLoading) {
     return (
@@ -78,7 +101,8 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
+      <InAppNotificationBanner />
       <Stack.Navigator>
         {user ? (
           // Authenticated App Stack
@@ -87,6 +111,16 @@ export const AppNavigator = () => {
               name="Main"
               component={MainTabs}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="MyJobs"
+              component={MyJobsScreen}
+              options={{ title: 'My Gigs & Applications' }}
+            />
+            <Stack.Screen
+              name="TaskCandidates"
+              component={TaskCandidatesScreen}
+              options={{ title: 'Candidates' }}
             />
             <Stack.Screen
               name="TaskDetail"

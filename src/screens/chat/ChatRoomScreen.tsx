@@ -13,22 +13,37 @@ import { useChatStore } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const ChatRoomScreen = ({ route }: any) => {
-  const { taskId, taskTitle } = route.params;
+  const { taskId, taskTitle, otherUser } = route.params;
   const [inputText, setInputText] = useState('');
-  const { messages, fetchMessages, connectWebSocket, disconnectWebSocket, sendMessage } = useChatStore();
+  const {
+    messages,
+    fetchMessages,
+    connectWebSocket,
+    disconnectWebSocket,
+    sendMessage,
+    setActiveChatRoom,
+    fetchConversations,
+  } = useChatStore();
   const { user, token } = useAuthStore();
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    fetchMessages(taskId);
-    if (token) {
-      connectWebSocket(taskId, token);
+    if (otherUser?.id) {
+      setActiveChatRoom({ taskId, otherUserId: otherUser.id });
+      fetchMessages(taskId, otherUser.id);
+      if (token) {
+        connectWebSocket(taskId, otherUser.id, token);
+      }
     }
 
     return () => {
       disconnectWebSocket();
+      setActiveChatRoom(null);
+      if (user?.id) {
+        fetchConversations(user.id);
+      }
     };
-  }, [taskId, token]);
+  }, [taskId, otherUser?.id, token]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
