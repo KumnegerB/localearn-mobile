@@ -89,7 +89,8 @@ export interface InAppNotification {
   message: string;
   taskId: number;
   taskTitle: string;
-  otherUser: User;
+  otherUser?: User;
+  type?: 'MESSAGE' | 'APPLICATION_ACCEPTED';
 }
 
 export interface AuthResponse {

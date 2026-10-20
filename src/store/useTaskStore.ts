@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { apiClient } from '../api/client';
 import { Task, TaskStatus, TaskApplication } from '../types';
+import { useChatStore } from './useChatStore';
 
 interface TaskFilter {
   category?: string;
@@ -16,6 +17,8 @@ interface TaskState {
   myAppliedTasks: TaskApplication[];
   candidates: TaskApplication[];
   currentTask: Task | null;
+  notifiedAcceptedAppIds: Set<number>;
+  hasLoadedAppliedTasksOnce: boolean;
   isLoading: boolean;
   error: string | null;
   fetchTasks: (filters?: TaskFilter) => Promise<void>;
@@ -36,6 +39,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   myAppliedTasks: [],
   candidates: [],
   currentTask: null,
+  notifiedAcceptedAppIds: new Set<number>(),
+  hasLoadedAppliedTasksOnce: false,
   isLoading: false,
   error: null,
 
@@ -72,10 +77,39 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   fetchMyAppliedTasks: async () => {
-    set({ isLoading: true, error: null });
     try {
       const response = await apiClient.get<TaskApplication[]>('/tasks/my-applied');
-      set({ myAppliedTasks: response.data, isLoading: false });
+      const apps = response.data;
+      const state = get();
+
+      // Detect newly accepted applications
+      if (state.hasLoadedAppliedTasksOnce) {
+        for (const app of apps) {
+          if (app.status === 'ACCEPTED' && !state.notifiedAcceptedAppIds.has(app.id)) {
+            useChatStore.getState().triggerNotification({
+              id: `accepted-${app.id}`,
+              type: 'APPLICATION_ACCEPTED',
+              title: '🎉 Application Accepted!',
+              senderName: app.task?.creator?.full_name || 'Gig Poster',
+              message: `You have been accepted for "${app.task?.title || 'Gig'}"! Tap to view details.`,
+              taskId: app.task_id,
+              taskTitle: app.task?.title || 'Gig',
+              otherUser: app.task?.creator,
+            });
+            break;
+          }
+        }
+      }
+
+      const updatedSet = new Set(state.notifiedAcceptedAppIds);
+      apps.filter((a) => a.status === 'ACCEPTED').forEach((a) => updatedSet.add(a.id));
+
+      set({
+        myAppliedTasks: apps,
+        notifiedAcceptedAppIds: updatedSet,
+        hasLoadedAppliedTasksOnce: true,
+        isLoading: false,
+      });
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to fetch applied jobs', isLoading: false });
     }

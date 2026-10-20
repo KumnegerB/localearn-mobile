@@ -34,10 +34,10 @@ export const InAppNotificationBanner: React.FC = () => {
         }),
       ]).start();
 
-      // Auto dismiss after 5 seconds
+      // Auto dismiss after 3 seconds
       const timer = setTimeout(() => {
         handleDismiss();
-      }, 5000);
+      }, 3000);
 
       return () => clearTimeout(timer);
     } else {
@@ -77,14 +77,20 @@ export const InAppNotificationBanner: React.FC = () => {
     if (!activeNotification) return;
     const notif = activeNotification;
     handleDismiss();
-    navigate('ChatRoom', {
-      taskId: notif.taskId,
-      taskTitle: notif.taskTitle,
-      otherUser: notif.otherUser,
-    });
+    if (notif.type === 'APPLICATION_ACCEPTED') {
+      navigate('TaskDetail', { taskId: notif.taskId });
+    } else {
+      navigate('ChatRoom', {
+        taskId: notif.taskId,
+        taskTitle: notif.taskTitle,
+        otherUser: notif.otherUser,
+      });
+    }
   };
 
   if (!activeNotification) return null;
+
+  const isAcceptedType = activeNotification.type === 'APPLICATION_ACCEPTED';
 
   return (
     <Animated.View
@@ -98,18 +104,25 @@ export const InAppNotificationBanner: React.FC = () => {
       pointerEvents="box-none"
     >
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, isAcceptedType && styles.acceptedCard]}
         activeOpacity={0.92}
         onPress={handlePress}
       >
-        <View style={styles.iconCircle}>
-          <Ionicons name="chatbubbles" size={20} color="#ffffff" />
+        <View style={[styles.iconCircle, isAcceptedType && styles.acceptedIconCircle]}>
+          <Ionicons
+            name={isAcceptedType ? 'trophy' : 'chatbubbles'}
+            size={20}
+            color="#ffffff"
+          />
         </View>
 
         <View style={styles.content}>
           <View style={styles.topRow}>
-            <Text style={styles.senderName} numberOfLines={1}>
-              {activeNotification.senderName}
+            <Text
+              style={[styles.senderName, isAcceptedType && styles.acceptedSenderName]}
+              numberOfLines={1}
+            >
+              {isAcceptedType ? activeNotification.title : activeNotification.senderName}
             </Text>
             <Text style={styles.tagText} numberOfLines={1}>
               • {activeNotification.taskTitle}
@@ -156,6 +169,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 14,
     elevation: 9,
+  },
+  acceptedCard: {
+    borderColor: '#86efac',
+    backgroundColor: '#f0fdf4',
+  },
+  acceptedIconCircle: {
+    backgroundColor: '#103B31',
+  },
+  acceptedSenderName: {
+    color: '#103B31',
   },
   iconCircle: {
     width: 38,

@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
+import { useTaskStore } from '../store/useTaskStore';
 import { navigationRef } from './navigationRef';
 import { SiraLogo } from '../components/common/SiraLogo';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
@@ -75,26 +76,30 @@ function MainTabs() {
 export const AppNavigator = () => {
   const { user, isCheckingAuth, checkAuth } = useAuthStore();
   const fetchConversations = useChatStore((s) => s.fetchConversations);
+  const fetchMyAppliedTasks = useTaskStore((s) => s.fetchMyAppliedTasks);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Background polling for conversations & incoming message notifications
+  // Background polling for conversations, messages & application acceptances
   useEffect(() => {
     if (!user?.id) return;
 
     fetchConversations(user.id);
+    fetchMyAppliedTasks();
 
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchConversations(user.id);
+        fetchMyAppliedTasks();
       }
-    }, 6000);
+    }, 4000);
 
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
         fetchConversations(user.id);
+        fetchMyAppliedTasks();
       }
     });
 
