@@ -65,7 +65,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
           <Ionicons
             name="create-outline"
             size={18}
-            color={activeTab === 'posted' ? '#2563eb' : '#64748b'}
+            color={activeTab === 'posted' ? '#103B31' : '#64748b'}
             style={{ marginRight: 6 }}
           />
           <Text
@@ -82,7 +82,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
           <Ionicons
             name="paper-plane-outline"
             size={18}
-            color={activeTab === 'applied' ? '#2563eb' : '#64748b'}
+            color={activeTab === 'applied' ? '#103B31' : '#64748b'}
             style={{ marginRight: 6 }}
           />
           <Text
@@ -96,7 +96,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
       {/* Content */}
       {isLoading && !refreshing && (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#103B31" />
         </View>
       )}
 
@@ -106,28 +106,65 @@ export const MyJobsScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id.toString()}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <View style={styles.postedItemWrapper}>
-              <TaskCard
-                task={item}
-                onPress={() => navigation.navigate('TaskDetail', { taskId: item.id })}
-              />
-              <View style={styles.postedActionRow}>
-                <TouchableOpacity
-                  style={styles.candidatesBtn}
-                  onPress={() =>
-                    navigation.navigate('TaskCandidates', {
-                      taskId: item.id,
-                      taskTitle: item.title,
-                    })
-                  }
-                >
-                  <Ionicons name="people-outline" size={16} color="#2563eb" style={{ marginRight: 6 }} />
-                  <Text style={styles.candidatesBtnText}>View Candidates / Applications</Text>
-                </TouchableOpacity>
+          renderItem={({ item }) => {
+            const isAssignedOrDone = item.status === 'ASSIGNED' || item.status === 'COMPLETED';
+
+            return (
+              <View style={styles.postedItemWrapper}>
+                <TaskCard
+                  task={item}
+                  onPress={() => navigation.navigate('TaskDetail', { taskId: item.id })}
+                />
+                <View style={styles.postedActionRow}>
+                  {isAssignedOrDone && item.helper ? (
+                    <View style={styles.assignedHelperBox}>
+                      <View style={styles.assignedHelperLeft}>
+                        <View style={styles.helperAvatarSmall}>
+                          <Text style={styles.helperAvatarTextSmall}>
+                            {item.helper.full_name?.charAt(0) || 'H'}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.assignedToLabel}>Assigned Helper</Text>
+                          <Text style={styles.assignedHelperName} numberOfLines={1}>
+                            {item.helper.full_name}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.chatHelperButton}
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          navigation.navigate('ChatRoom', {
+                            taskId: item.id,
+                            taskTitle: item.title,
+                            otherUser: item.helper,
+                          })
+                        }
+                      >
+                        <Ionicons name="chatbubbles" size={14} color="#ffffff" style={{ marginRight: 5 }} />
+                        <Text style={styles.chatHelperButtonText}>Chat</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : item.status === 'OPEN' ? (
+                    <TouchableOpacity
+                      style={styles.candidatesBtn}
+                      onPress={() =>
+                        navigation.navigate('TaskCandidates', {
+                          taskId: item.id,
+                          taskTitle: item.title,
+                        })
+                      }
+                    >
+                      <Ionicons name="people-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
+                      <Text style={styles.candidatesBtnText}>View Candidates / Applications</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               </View>
-            </View>
-          )}
+            );
+          }}
           ListEmptyComponent={
             !isLoading ? (
               <View style={styles.emptyContainer}>
@@ -203,7 +240,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
                         })
                       }
                     >
-                      <Ionicons name="chatbubbles-outline" size={15} color="#2563eb" style={{ marginRight: 4 }} />
+                      <Ionicons name="chatbubbles-outline" size={15} color="#103B31" style={{ marginRight: 4 }} />
                       <Text style={styles.contactPosterBtnText}>Message Poster</Text>
                     </TouchableOpacity>
                   </View>
@@ -251,7 +288,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTabButton: {
-    borderBottomColor: '#2563eb',
+    borderBottomColor: '#103B31',
   },
   tabButtonText: {
     fontSize: 14,
@@ -259,7 +296,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   activeTabButtonText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontWeight: '700',
   },
   centerContainer: {
@@ -285,16 +322,71 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
   },
+  assignedHelperBox: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f2f7f5',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  assignedHelperLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  helperAvatarSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#103B31',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  helperAvatarTextSmall: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  assignedToLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  assignedHelperName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  chatHelperButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#103B31',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  chatHelperButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   candidatesBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   candidatesBtnText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontWeight: '700',
     fontSize: 13,
   },
@@ -371,13 +463,15 @@ const styles = StyleSheet.create({
   contactPosterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#cce3de',
   },
   contactPosterBtnText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -400,7 +494,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   postNowBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,

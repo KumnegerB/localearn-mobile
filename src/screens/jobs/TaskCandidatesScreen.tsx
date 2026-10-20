@@ -58,7 +58,7 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
 
       {isLoading && !refreshing && candidates.length === 0 ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#103B31" />
         </View>
       ) : (
         <FlatList
@@ -140,7 +140,7 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
                       })
                     }
                   >
-                    <Ionicons name="chatbubble-ellipses-outline" size={16} color="#2563eb" style={{ marginRight: 6 }} />
+                    <Ionicons name="chatbubble-ellipses-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
                     <Text style={styles.chatButtonText}>Direct Chat</Text>
                   </TouchableOpacity>
 
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -301,20 +301,22 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   noteBox: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     padding: 10,
     borderRadius: 8,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#cce3de',
   },
   noteLabel: {
     fontSize: 11,
-    color: '#2563eb',
+    color: '#103B31',
     fontWeight: '700',
     marginBottom: 2,
   },
   noteText: {
     fontSize: 13,
-    color: '#1e3a8a',
+    color: '#103B31',
     fontStyle: 'italic',
   },
   actionsRow: {
@@ -327,14 +329,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: '#cce3de',
   },
   chatButtonText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontWeight: '700',
     fontSize: 13,
   },

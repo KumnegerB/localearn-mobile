@@ -39,16 +39,20 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
   if (isLoading || !currentTask) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#103B31" />
       </View>
     );
   }
 
   const isCreator = user?.id === currentTask.creator_id;
   const isHelper = user?.id === currentTask.helper_id;
+  const isAssignedOrDone = currentTask.status === 'ASSIGNED' || currentTask.status === 'COMPLETED';
   const hasApplied =
     Boolean(currentTask.has_applied) ||
     myAppliedTasks.some((app) => app.task_id === currentTask.id);
+  const hasBottomActions =
+    (!isCreator && (Boolean(currentTask.creator) || currentTask.status === 'OPEN')) ||
+    (isCreator && (currentTask.status === 'OPEN' || currentTask.status === 'ASSIGNED'));
 
   const handleApply = async () => {
     if (hasApplied) {
@@ -125,92 +129,152 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
         <Text style={styles.sectionHeader}>Task Description</Text>
         <Text style={styles.description}>{currentTask.description}</Text>
 
-        <View style={styles.divider} />
+        {/* Posted By (Only shown when viewer is NOT the creator) */}
+        {!isCreator && currentTask.creator && (
+          <>
+            <View style={styles.divider} />
+            <Text style={styles.sectionHeader}>Posted By</Text>
+            <View style={styles.userCard}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {currentTask.creator?.full_name?.charAt(0) || 'U'}
+                </Text>
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{currentTask.creator?.full_name || 'Neighbor'}</Text>
+                <Text style={styles.userRating}>
+                  {currentTask.creator?.rating_count && currentTask.creator.rating_count > 0
+                    ? `★ ${currentTask.creator.rating.toFixed(1)} (${currentTask.creator.rating_count} reviews)`
+                    : '0 reviews'}
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
 
-        {/* Posted By */}
-        <Text style={styles.sectionHeader}>Posted By</Text>
-        <View style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {currentTask.creator?.full_name?.charAt(0) || 'U'}
-            </Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{currentTask.creator?.full_name || 'Neighbor'}</Text>
-            <Text style={styles.userRating}>
-              {currentTask.creator?.rating_count && currentTask.creator.rating_count > 0
-                ? `★ ${currentTask.creator.rating.toFixed(1)} (${currentTask.creator.rating_count} reviews)`
-                : '0 reviews'}
-            </Text>
-          </View>
-        </View>
+        {/* Assigned Helper (Shown if task is ASSIGNED or COMPLETED) */}
+        {isAssignedOrDone && currentTask.helper && (
+          <>
+            <View style={styles.divider} />
+            <Text style={styles.sectionHeader}>Assigned Helper</Text>
+            <View style={styles.assignedUserCard}>
+              <View style={styles.helperAvatar}>
+                <Text style={styles.helperAvatarText}>
+                  {currentTask.helper?.full_name?.charAt(0) || 'H'}
+                </Text>
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{currentTask.helper?.full_name || 'Helper'}</Text>
+                <Text style={styles.userRating}>
+                  {currentTask.helper?.rating_count && currentTask.helper.rating_count > 0
+                    ? `★ ${currentTask.helper.rating.toFixed(1)} (${currentTask.helper.rating_count} reviews)`
+                    : '★ New Helper'}
+                </Text>
+              </View>
+              {isCreator && (
+                <TouchableOpacity
+                  style={styles.chatHelperButton}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    navigation.navigate('ChatRoom', {
+                      taskId: currentTask.id,
+                      taskTitle: currentTask.title,
+                      otherUser: currentTask.helper,
+                    })
+                  }
+                >
+                  <Ionicons name="chatbubbles" size={15} color="#ffffff" style={{ marginRight: 5 }} />
+                  <Text style={styles.chatHelperButtonText}>Chat</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Action Bar */}
-      <View style={styles.bottomBar}>
-        {!isCreator && currentTask.creator && (
-          <TouchableOpacity
-            style={styles.chatButton}
-            onPress={() =>
-              navigation.navigate('ChatRoom', {
-                taskId: currentTask.id,
-                taskTitle: currentTask.title,
-                otherUser: currentTask.creator,
-              })
-            }
-          >
-            <Ionicons name="chatbubbles-outline" size={18} color="#2563eb" style={{ marginRight: 6 }} />
-            <Text style={styles.chatButtonText}>Message Poster</Text>
-          </TouchableOpacity>
-        )}
-
-        {isCreator && (
-          <TouchableOpacity
-            style={styles.candidatesButton}
-            onPress={() =>
-              navigation.navigate('TaskCandidates', {
-                taskId: currentTask.id,
-                taskTitle: currentTask.title,
-              })
-            }
-          >
-            <Ionicons name="people-outline" size={18} color="#2563eb" style={{ marginRight: 6 }} />
-            <Text style={styles.candidatesButtonText}>View Candidates</Text>
-          </TouchableOpacity>
-        )}
-
-        {!isCreator && currentTask.status === 'OPEN' && (
-          hasApplied ? (
-            <View style={styles.appliedButton}>
-              <Ionicons name="checkmark-circle" size={18} color="#15803d" style={{ marginRight: 6 }} />
-              <Text style={styles.appliedButtonText}>Applied</Text>
-            </View>
-          ) : (
+      {hasBottomActions && (
+        <View style={styles.bottomBar}>
+          {!isCreator && currentTask.creator && (
             <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setApplyModalVisible(true)}
+              style={styles.chatButton}
+              onPress={() =>
+                navigation.navigate('ChatRoom', {
+                  taskId: currentTask.id,
+                  taskTitle: currentTask.title,
+                  otherUser: currentTask.creator,
+                })
+              }
+            >
+              <Ionicons name="chatbubbles-outline" size={18} color="#103B31" style={{ marginRight: 6 }} />
+              <Text style={styles.chatButtonText}>Message Poster</Text>
+            </TouchableOpacity>
+          )}
+
+          {isCreator && currentTask.status === 'OPEN' && (
+            <TouchableOpacity
+              style={styles.candidatesButton}
+              onPress={() =>
+                navigation.navigate('TaskCandidates', {
+                  taskId: currentTask.id,
+                  taskTitle: currentTask.title,
+                })
+              }
+            >
+              <Ionicons name="people-outline" size={18} color="#103B31" style={{ marginRight: 6 }} />
+              <Text style={styles.candidatesButtonText}>View Candidates</Text>
+            </TouchableOpacity>
+          )}
+
+          {isCreator && currentTask.status === 'ASSIGNED' && currentTask.helper && (
+            <TouchableOpacity
+              style={styles.chatButton}
+              onPress={() =>
+                navigation.navigate('ChatRoom', {
+                  taskId: currentTask.id,
+                  taskTitle: currentTask.title,
+                  otherUser: currentTask.helper,
+                })
+              }
+            >
+              <Ionicons name="chatbubbles-outline" size={18} color="#103B31" style={{ marginRight: 6 }} />
+              <Text style={styles.chatButtonText}>Chat with Helper</Text>
+            </TouchableOpacity>
+          )}
+
+          {!isCreator && currentTask.status === 'OPEN' && (
+            hasApplied ? (
+              <View style={styles.appliedButton}>
+                <Ionicons name="checkmark-circle" size={18} color="#15803d" style={{ marginRight: 6 }} />
+                <Text style={styles.appliedButtonText}>Applied</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setApplyModalVisible(true)}
+                disabled={actionLoading}
+              >
+                <Ionicons name="hand-right-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.actionButtonText}>Apply for Gig</Text>
+              </TouchableOpacity>
+            )
+          )}
+
+          {isCreator && currentTask.status === 'ASSIGNED' && (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.completeButton]}
+              onPress={handleComplete}
               disabled={actionLoading}
             >
-              <Ionicons name="hand-right-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.actionButtonText}>Apply for Gig</Text>
+              {actionLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.actionButtonText}>Mark Completed</Text>
+              )}
             </TouchableOpacity>
-          )
-        )}
-
-        {isCreator && currentTask.status === 'ASSIGNED' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.completeButton]}
-            onPress={handleComplete}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.actionButtonText}>Mark Completed</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+          )}
+        </View>
+      )}
 
       {/* Apply Modal */}
       <Modal visible={applyModalVisible} animationType="slide" transparent>
@@ -236,8 +300,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
               multiline
               numberOfLines={4}
               maxLength={300}
-              cursorColor="#7c3aed"
-              selectionColor="#ddd6fe"
+              cursorColor="#103B31"
+              selectionColor="#cce3de"
             />
             <Text style={styles.charCountText}>{applyMessage.length}/300</Text>
 
@@ -290,13 +354,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryPill: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
   },
   categoryText: {
-    color: '#2563eb',
+    color: '#103B31',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -327,7 +391,7 @@ const styles = StyleSheet.create({
   budget: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#10b981',
+    color: '#103B31',
   },
   location: {
     fontSize: 14,
@@ -361,7 +425,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -369,6 +433,42 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#ffffff',
     fontSize: 18,
+    fontWeight: '700',
+  },
+  assignedUserCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f7f5',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  helperAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FF6B3D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  helperAvatarText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  chatHelperButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#103B31',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
+  chatHelperButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: '700',
   },
   userInfo: {
@@ -399,34 +499,34 @@ const styles = StyleSheet.create({
   chatButton: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: '#cce3de',
   },
   chatButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#103B31',
   },
   candidatesButton: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f2f7f5',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: '#cce3de',
   },
   candidatesButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#103B31',
   },
   appliedButton: {
     flex: 1.2,
@@ -447,7 +547,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1.2,
     flexDirection: 'row',
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -526,7 +626,7 @@ const styles = StyleSheet.create({
   },
   submitApplyBtn: {
     flex: 1.5,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
