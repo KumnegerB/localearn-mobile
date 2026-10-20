@@ -77,22 +77,25 @@ export const AppNavigator = () => {
   const { user, isCheckingAuth, checkAuth } = useAuthStore();
   const fetchConversations = useChatStore((s) => s.fetchConversations);
   const fetchMyAppliedTasks = useTaskStore((s) => s.fetchMyAppliedTasks);
+  const fetchReceivedApplications = useTaskStore((s) => s.fetchReceivedApplications);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Background polling for conversations, messages & application acceptances
+  // Background polling for conversations, messages, application acceptances & candidate alerts
   useEffect(() => {
     if (!user?.id) return;
 
     fetchConversations(user.id);
     fetchMyAppliedTasks();
+    fetchReceivedApplications();
 
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchConversations(user.id);
         fetchMyAppliedTasks();
+        fetchReceivedApplications();
       }
     }, 4000);
 
@@ -100,6 +103,7 @@ export const AppNavigator = () => {
       if (nextState === 'active') {
         fetchConversations(user.id);
         fetchMyAppliedTasks();
+        fetchReceivedApplications();
       }
     });
 

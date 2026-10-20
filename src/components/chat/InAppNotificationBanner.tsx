@@ -79,6 +79,8 @@ export const InAppNotificationBanner: React.FC = () => {
     handleDismiss();
     if (notif.type === 'APPLICATION_ACCEPTED') {
       navigate('TaskDetail', { taskId: notif.taskId });
+    } else if (notif.type === 'NEW_CANDIDATE') {
+      navigate('TaskCandidates', { taskId: notif.taskId, taskTitle: notif.taskTitle });
     } else {
       navigate('ChatRoom', {
         taskId: notif.taskId,
@@ -91,6 +93,9 @@ export const InAppNotificationBanner: React.FC = () => {
   if (!activeNotification) return null;
 
   const isAcceptedType = activeNotification.type === 'APPLICATION_ACCEPTED';
+  const isCandidateType = activeNotification.type === 'NEW_CANDIDATE';
+
+  const iconName = isAcceptedType ? 'trophy' : isCandidateType ? 'people' : 'chatbubbles';
 
   return (
     <Animated.View
@@ -104,25 +109,37 @@ export const InAppNotificationBanner: React.FC = () => {
       pointerEvents="box-none"
     >
       <TouchableOpacity
-        style={[styles.card, isAcceptedType && styles.acceptedCard]}
+        style={[
+          styles.card,
+          isAcceptedType && styles.acceptedCard,
+          isCandidateType && styles.candidateCard,
+        ]}
         activeOpacity={0.92}
         onPress={handlePress}
       >
-        <View style={[styles.iconCircle, isAcceptedType && styles.acceptedIconCircle]}>
-          <Ionicons
-            name={isAcceptedType ? 'trophy' : 'chatbubbles'}
-            size={20}
-            color="#ffffff"
-          />
+        <View
+          style={[
+            styles.iconCircle,
+            isAcceptedType && styles.acceptedIconCircle,
+            isCandidateType && styles.candidateIconCircle,
+          ]}
+        >
+          <Ionicons name={iconName} size={20} color="#ffffff" />
         </View>
 
         <View style={styles.content}>
           <View style={styles.topRow}>
             <Text
-              style={[styles.senderName, isAcceptedType && styles.acceptedSenderName]}
+              style={[
+                styles.senderName,
+                isAcceptedType && styles.acceptedSenderName,
+                isCandidateType && styles.candidateSenderName,
+              ]}
               numberOfLines={1}
             >
-              {isAcceptedType ? activeNotification.title : activeNotification.senderName}
+              {isAcceptedType || isCandidateType
+                ? activeNotification.title
+                : activeNotification.senderName}
             </Text>
             <Text style={styles.tagText} numberOfLines={1}>
               • {activeNotification.taskTitle}
@@ -179,6 +196,16 @@ const styles = StyleSheet.create({
   },
   acceptedSenderName: {
     color: '#103B31',
+  },
+  candidateCard: {
+    borderColor: '#fed7aa',
+    backgroundColor: '#fffaf5',
+  },
+  candidateIconCircle: {
+    backgroundColor: '#FF6B3D',
+  },
+  candidateSenderName: {
+    color: '#c2410c',
   },
   iconCircle: {
     width: 38,

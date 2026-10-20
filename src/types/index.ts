@@ -90,7 +90,7 @@ export interface InAppNotification {
   taskId: number;
   taskTitle: string;
   otherUser?: User;
-  type?: 'MESSAGE' | 'APPLICATION_ACCEPTED';
+  type?: 'MESSAGE' | 'APPLICATION_ACCEPTED' | 'NEW_CANDIDATE';
 }
 
 export interface AuthResponse {

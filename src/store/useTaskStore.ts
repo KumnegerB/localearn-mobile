@@ -16,9 +16,12 @@ interface TaskState {
   myPostedTasks: Task[];
   myAppliedTasks: TaskApplication[];
   candidates: TaskApplication[];
+  receivedApplications: TaskApplication[];
   currentTask: Task | null;
   notifiedAcceptedAppIds: Set<number>;
+  notifiedCandidateAppIds: Set<number>;
   hasLoadedAppliedTasksOnce: boolean;
+  hasLoadedReceivedApplicationsOnce: boolean;
   isLoading: boolean;
   error: string | null;
   fetchTasks: (filters?: TaskFilter) => Promise<void>;
@@ -28,6 +31,7 @@ interface TaskState {
   completeTask: (id: number) => Promise<boolean>;
   fetchMyPostedTasks: () => Promise<void>;
   fetchMyAppliedTasks: () => Promise<void>;
+  fetchReceivedApplications: () => Promise<void>;
   fetchCandidates: (taskId: number) => Promise<void>;
   applyForTask: (taskId: number, message?: string) => Promise<boolean>;
   acceptCandidate: (applicationId: number) => Promise<boolean>;
@@ -38,9 +42,12 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   myPostedTasks: [],
   myAppliedTasks: [],
   candidates: [],
+  receivedApplications: [],
   currentTask: null,
   notifiedAcceptedAppIds: new Set<number>(),
+  notifiedCandidateAppIds: new Set<number>(),
   hasLoadedAppliedTasksOnce: false,
+  hasLoadedReceivedApplicationsOnce: false,
   isLoading: false,
   error: null,
 
@@ -112,6 +119,44 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       });
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to fetch applied jobs', isLoading: false });
+    }
+  },
+
+  fetchReceivedApplications: async () => {
+    try {
+      const response = await apiClient.get<TaskApplication[]>('/tasks/applications/received');
+      const apps = response.data;
+      const state = get();
+
+      // Detect new candidates applied for my posted tasks
+      if (state.hasLoadedReceivedApplicationsOnce) {
+        for (const app of apps) {
+          if (app.status === 'PENDING' && !state.notifiedCandidateAppIds.has(app.id)) {
+            useChatStore.getState().triggerNotification({
+              id: `candidate-${app.id}`,
+              type: 'NEW_CANDIDATE',
+              title: '👤 New Candidate Applied!',
+              senderName: app.applicant?.full_name || 'New Candidate',
+              message: `${app.applicant?.full_name || 'A neighbor'} applied for "${app.task?.title || 'your gig'}". Tap to review.`,
+              taskId: app.task_id,
+              taskTitle: app.task?.title || 'Gig',
+              otherUser: app.applicant,
+            });
+            break;
+          }
+        }
+      }
+
+      const updatedSet = new Set(state.notifiedCandidateAppIds);
+      apps.forEach((a) => updatedSet.add(a.id));
+
+      set({
+        receivedApplications: apps,
+        notifiedCandidateAppIds: updatedSet,
+        hasLoadedReceivedApplicationsOnce: true,
+      });
+    } catch {
+      // Silently catch to not disrupt UI
     }
   },
 
