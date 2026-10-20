@@ -39,7 +39,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
   if (loading || !userLocation) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#103B31" />
         <Text style={styles.loadingText}>Locating nearby gigs...</Text>
       </View>
     );
