@@ -10,14 +10,19 @@ import {
   ScrollView,
 } from 'react-native';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { TaskCard } from '../../components/task/TaskCard';
 
 const CATEGORIES = ['All', 'Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tech Help', 'General'];
 
 export const TaskListScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks, isLoading } = useTaskStore();
+  const { user } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Filter out the user's own posted tasks so they only see tasks they can apply for
+  const exploreTasks = tasks.filter((item) => !user?.id || item.creator_id !== user.id);
 
   useEffect(() => {
     loadTasks();
@@ -62,13 +67,13 @@ export const TaskListScreen = ({ navigation }: any) => {
       </View>
 
       {/* Task List */}
-      {isLoading && !isRefreshing && tasks.length === 0 ? (
+      {isLoading && !isRefreshing && exploreTasks.length === 0 ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#103B31" />
         </View>
       ) : (
         <FlatList
-          data={tasks}
+          data={exploreTasks}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TaskCard

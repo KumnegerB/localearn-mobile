@@ -3,12 +3,16 @@ import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-nat
 import MapView, { Marker, Callout, UrlTile } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
 
 export const TaskMapScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks } = useTaskStore();
+  const { user } = useAuthStore();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const mapTasks = tasks.filter((task) => !user?.id || task.creator_id !== user.id);
 
   useEffect(() => {
     (async () => {
@@ -64,7 +68,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
           flipY={false}
           zIndex={-1}
         />
-        {tasks.map((task) => (
+        {mapTasks.map((task) => (
           <Marker
             key={task.id}
             coordinate={{

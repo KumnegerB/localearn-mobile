@@ -10,14 +10,18 @@ import {
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
 import { Task } from '../../types';
 
 export const TaskMapScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks } = useTaskStore();
+  const { user } = useAuthStore();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const mapTasks = tasks.filter((t) => !user?.id || t.creator_id !== user.id);
 
   useEffect(() => {
     (async () => {
@@ -75,7 +79,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
         <View style={styles.mapOverlayNotice}>
           <Ionicons name="map-outline" size={15} color="#103B31" style={{ marginRight: 6 }} />
           <Text style={styles.mapOverlayNoticeText}>
-            {selectedTask ? `Viewing: ${selectedTask.title}` : `Showing ${tasks.length} nearby gigs`}
+            {selectedTask ? `Viewing: ${selectedTask.title}` : `Showing ${mapTasks.length} nearby gigs`}
           </Text>
         </View>
       </View>
@@ -83,7 +87,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       {/* Nearby Gigs List on Web */}
       <View style={styles.listSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Nearby Gigs on Map ({tasks.length})</Text>
+          <Text style={styles.sectionTitle}>Nearby Gigs on Map ({mapTasks.length})</Text>
           <TouchableOpacity onPress={() => fetchTasks()} style={styles.refreshBtn}>
             <Ionicons name="refresh" size={16} color="#103B31" />
           </TouchableOpacity>
@@ -94,7 +98,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
           contentContainerStyle={styles.tasksList}
           showsVerticalScrollIndicator={false}
         >
-          {tasks.map((task) => {
+          {mapTasks.map((task) => {
             const isSelected = selectedTask?.id === task.id;
             return (
               <TouchableOpacity

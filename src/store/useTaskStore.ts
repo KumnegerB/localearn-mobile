@@ -252,7 +252,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     try {
       const response = await apiClient.post<Task>('/tasks/', taskData);
       set((state) => ({
-        tasks: [response.data, ...state.tasks],
         myPostedTasks: [response.data, ...state.myPostedTasks],
         isLoading: false,
       }));
