@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { AppNotification } from '../types';
 
@@ -21,6 +22,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   hasLoadedOnce: false,
 
   fetchNotifications: async () => {
+    const token = await AsyncStorage.getItem('@localearn_token');
+    if (!token) {
+      set({ notifications: [], unreadCount: 0, isLoading: false });
+      return;
+    }
+
     set({ isLoading: !get().hasLoadedOnce });
     try {
       const response = await apiClient.get<AppNotification[]>('/notifications');
@@ -32,13 +39,22 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         isLoading: false,
         hasLoadedOnce: true,
       });
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        set({ notifications: [], unreadCount: 0, isLoading: false });
+        return;
+      }
       set({ isLoading: false });
     }
   },
 
   pollUnreadCount: async () => {
+    const token = await AsyncStorage.getItem('@localearn_token');
+    if (!token) {
+      set({ unreadCount: 0 });
+      return;
+    }
+
     try {
       const response = await apiClient.get<{ count: number }>('/notifications/unread-count');
       set({ unreadCount: response.data.count });

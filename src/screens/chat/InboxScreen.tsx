@@ -20,14 +20,18 @@ export const InboxScreen = ({ navigation }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchConversations(user?.id);
+      if (user?.id) {
+        fetchConversations(user.id);
+      }
     }, [user?.id])
   );
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchConversations(user?.id);
-    setRefreshing(false);
+    if (user?.id) {
+      setRefreshing(true);
+      await fetchConversations(user.id);
+      setRefreshing(false);
+    }
   };
 
   const formatTime = (isoString?: string) => {

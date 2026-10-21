@@ -163,7 +163,13 @@ export const AppNavigator = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <InAppNotificationBanner />
-      <Stack.Navigator initialRouteName="Main">
+      <Stack.Navigator initialRouteName={user ? 'Main' : 'Landing'}>
+        {/* Landing Page (Welcome screen with single Continue button for guests) */}
+        <Stack.Screen
+          name="Landing"
+          component={LandingScreen}
+          options={{ headerShown: false }}
+        />
         {/* Main App (Progressive Trust: accessible to guests & authenticated users) */}
         <Stack.Screen
           name="Main"
@@ -212,11 +218,6 @@ export const AppNavigator = () => {
         />
 
         {/* Auth Screens (Action-Gated entry points) */}
-        <Stack.Screen
-          name="Landing"
-          component={LandingScreen}
-          options={{ headerShown: false }}
-        />
         <Stack.Screen
           name="Login"
           component={LoginScreen}

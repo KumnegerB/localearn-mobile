@@ -65,6 +65,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchConversations: async (currentUserId?: number) => {
+    // If not authenticated, do not fire network request to authenticated endpoint
+    if (!currentUserId) {
+      set({ conversations: [], unreadCount: 0, isLoading: false });
+      return;
+    }
+
     try {
       const response = await apiClient.get<Conversation[]>('/chat/conversations');
       const convs = response.data;
@@ -109,8 +115,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         lastKnownMessageId: Math.max(state.lastKnownMessageId, maxMsgId),
         isLoading: false,
       });
-    } catch (err) {
-      console.error('Failed to load conversations', err);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        set({ conversations: [], unreadCount: 0, isLoading: false });
+        return;
+      }
       set({ isLoading: false });
     }
   },

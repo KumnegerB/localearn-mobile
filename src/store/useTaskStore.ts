@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { Task, TaskStatus, TaskApplication } from '../types';
 import { useChatStore } from './useChatStore';
@@ -75,16 +76,32 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   fetchMyPostedTasks: async () => {
+    const token = await AsyncStorage.getItem('@localearn_token');
+    if (!token) {
+      set({ myPostedTasks: [], isLoading: false });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.get<Task[]>('/tasks/my-posted');
       set({ myPostedTasks: response.data, isLoading: false });
     } catch (err: any) {
+      if (err.response?.status === 401) {
+        set({ myPostedTasks: [], isLoading: false });
+        return;
+      }
       set({ error: err.response?.data?.detail || 'Failed to fetch my posted jobs', isLoading: false });
     }
   },
 
   fetchMyAppliedTasks: async () => {
+    const token = await AsyncStorage.getItem('@localearn_token');
+    if (!token) {
+      set({ myAppliedTasks: [], isLoading: false });
+      return;
+    }
+
     try {
       const response = await apiClient.get<TaskApplication[]>('/tasks/my-applied');
       const apps = response.data;
@@ -119,11 +136,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         isLoading: false,
       });
     } catch (err: any) {
+      if (err.response?.status === 401) {
+        set({ myAppliedTasks: [], isLoading: false });
+        return;
+      }
       set({ error: err.response?.data?.detail || 'Failed to fetch applied jobs', isLoading: false });
     }
   },
 
   fetchReceivedApplications: async () => {
+    const token = await AsyncStorage.getItem('@localearn_token');
+    if (!token) {
+      set({ receivedApplications: [] });
+      return;
+    }
+
     try {
       const response = await apiClient.get<TaskApplication[]>('/tasks/applications/received');
       const apps = response.data;

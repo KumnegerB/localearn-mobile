@@ -33,23 +33,15 @@ export const LandingScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Bottom Actions */}
+        {/* Bottom Actions: Single Continue Button to explore the app */}
         <View style={styles.bottomSection}>
           <TouchableOpacity
             style={styles.primaryButton}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => navigation.replace('Main')}
           >
-            <Text style={styles.primaryButtonText}>Continue to Sign In</Text>
+            <Text style={styles.primaryButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={styles.secondaryButtonText}>Create an Account</Text>
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
