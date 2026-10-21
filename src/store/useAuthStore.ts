@@ -14,6 +14,7 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
+  verifyAccount: (telegramUsername?: string, phoneNumber?: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -96,6 +97,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to update profile' });
+      return false;
+    }
+  },
+
+  verifyAccount: async (telegramUsername, phoneNumber) => {
+    try {
+      const response = await apiClient.post<User>('/users/me/verify', {
+        telegram_username: telegramUsername,
+        phone_number: phoneNumber,
+      });
+      set({ user: response.data });
+      return true;
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Failed to verify account';
+      set({ error: typeof msg === 'string' ? msg : 'Verification failed' });
       return false;
     }
   },

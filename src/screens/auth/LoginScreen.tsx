@@ -56,7 +56,14 @@ export const LoginScreen = ({ navigation }: any) => {
     }
 
     setErrors({});
-    await login(email.trim(), password);
+    const success = await login(email.trim(), password);
+    if (success) {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('Main');
+      }
+    }
   };
 
   return (

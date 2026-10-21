@@ -10,6 +10,8 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useChatStore } from '../../store/useChatStore';
+import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
+import { TrustActionModal } from '../trust/TrustActionModal';
 
 interface TabItemProps {
   label: string;
@@ -98,8 +100,18 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
     }
   };
 
+  const {
+    modalMode,
+    actionTitle,
+    requireTrustAction,
+    closeModal,
+    handleVerificationSuccess,
+  } = useRequireTrustAction();
+
   const handleCenterPlusPress = () => {
-    navigation.navigate('CreateTask');
+    requireTrustAction(() => {
+      navigation.navigate('CreateTask');
+    }, 'post a new gig');
   };
 
   return (
@@ -173,6 +185,14 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
           );
         })}
       </View>
+
+      <TrustActionModal
+        mode={modalMode}
+        actionTitle={actionTitle}
+        onClose={closeModal}
+        onVerificationSuccess={handleVerificationSuccess}
+        navigation={navigation}
+      />
     </View>
   );
 };

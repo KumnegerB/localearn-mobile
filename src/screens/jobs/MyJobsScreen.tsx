@@ -10,11 +10,13 @@ import {
   Alert,
 } from 'react-native';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { TaskCard } from '../../components/task/TaskCard';
 import { formatPrice } from '../../utils/currency';
 import { Ionicons } from '@expo/vector-icons';
 
 export const MyJobsScreen = ({ navigation }: any) => {
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'posted' | 'applied'>('posted');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,8 +52,10 @@ export const MyJobsScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    if (user) {
+      loadData();
+    }
+  }, [activeTab, user]);
 
   const loadData = async () => {
     if (activeTab === 'posted') {
@@ -77,6 +81,29 @@ export const MyJobsScreen = ({ navigation }: any) => {
         return { bg: '#fffbeb', text: '#d97706' };
     }
   };
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.guestContainer}>
+          <View style={styles.guestIconBox}>
+            <Ionicons name="briefcase-outline" size={54} color="#103B31" />
+          </View>
+          <Text style={styles.guestTitle}>Sign in to track your gigs</Text>
+          <Text style={styles.guestSubtitle}>
+            Review the tasks you've posted and the gigs you've applied for once you sign in.
+          </Text>
+          <TouchableOpacity
+            style={styles.guestSignInBtn}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.guestSignInBtnText}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -595,6 +622,51 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
     fontSize: 14,
+  },
+  guestContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+  },
+  guestIconBox: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#f2f7f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  guestTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  guestSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  guestSignInBtn: {
+    backgroundColor: '#103B31',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  guestSignInBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

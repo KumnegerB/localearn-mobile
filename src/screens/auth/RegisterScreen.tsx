@@ -88,7 +88,14 @@ export const RegisterScreen = ({ navigation }: any) => {
     }
 
     setErrors({});
-    await register(fullName.trim(), email.trim(), password, phoneNumber.trim() || undefined);
+    const success = await register(fullName.trim(), email.trim(), password, phoneNumber.trim() || undefined);
+    if (success) {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('Main');
+      }
+    }
   };
 
   return (

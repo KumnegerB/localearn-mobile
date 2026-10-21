@@ -14,6 +14,8 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
 import { Ionicons } from '@expo/vector-icons';
+import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
+import { TrustActionModal } from '../../components/trust/TrustActionModal';
 
 export const TaskDetailScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
@@ -31,6 +33,14 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
   const [actionLoading, setActionLoading] = useState(false);
   const [applyModalVisible, setApplyModalVisible] = useState(false);
   const [applyMessage, setApplyMessage] = useState('');
+
+  const {
+    modalMode,
+    actionTitle,
+    requireTrustAction,
+    closeModal,
+    handleVerificationSuccess,
+  } = useRequireTrustAction();
 
   useEffect(() => {
     fetchTaskById(taskId);
@@ -320,7 +330,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
             ) : (
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => setApplyModalVisible(true)}
+                onPress={() => requireTrustAction(() => setApplyModalVisible(true), 'apply for this gig')}
                 disabled={actionLoading}
               >
                 <Ionicons name="hand-right-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
@@ -399,6 +409,14 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           </View>
         </View>
       </Modal>
+
+      <TrustActionModal
+        mode={modalMode}
+        actionTitle={actionTitle}
+        onClose={closeModal}
+        onVerificationSuccess={handleVerificationSuccess}
+        navigation={navigation}
+      />
     </View>
   );
 };

@@ -163,76 +163,70 @@ export const AppNavigator = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <InAppNotificationBanner />
-      <Stack.Navigator>
-        {user ? (
-          // Authenticated App Stack
-          <>
-            <Stack.Screen
-              name="Main"
-              component={MainTabs}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="MyJobs"
-              component={MyJobsScreen}
-              options={{ title: 'My Gigs & Applications' }}
-            />
-            <Stack.Screen
-              name="TaskCandidates"
-              component={TaskCandidatesScreen}
-              options={{ title: 'Candidates' }}
-            />
-            <Stack.Screen
-              name="TaskDetail"
-              component={TaskDetailScreen}
-              options={{ title: 'Task Details' }}
-            />
-            <Stack.Screen
-              name="CreateTask"
-              component={CreateTaskScreen}
-              options={{ title: 'Post a Gig' }}
-            />
-            <Stack.Screen
-              name="ChatRoom"
-              component={ChatRoomScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="LeaveReview"
-              component={LeaveReviewScreen}
-              options={{ title: 'Leave Review' }}
-            />
-            <Stack.Screen
-              name="Notifications"
-              component={NotificationScreen}
-              options={{ title: 'Notifications' }}
-            />
-            <Stack.Screen
-              name="UserProfile"
-              component={UserProfileScreen}
-              options={{ headerShown: false }}
-            />
-          </>
-        ) : (
-          // Auth Stack
-          <>
-            <Stack.Screen
-              name="Landing"
-              component={LandingScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Register"
-              component={RegisterScreen}
-              options={{ headerShown: false }}
-            />
-          </>
-        )}
+      <Stack.Navigator initialRouteName="Main">
+        {/* Main App (Progressive Trust: accessible to guests & authenticated users) */}
+        <Stack.Screen
+          name="Main"
+          component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TaskDetail"
+          component={TaskDetailScreen}
+          options={{ title: 'Task Details' }}
+        />
+        <Stack.Screen
+          name="CreateTask"
+          component={CreateTaskScreen}
+          options={{ title: 'Post a Gig' }}
+        />
+        <Stack.Screen
+          name="TaskCandidates"
+          component={TaskCandidatesScreen}
+          options={{ title: 'Candidates' }}
+        />
+        <Stack.Screen
+          name="MyJobs"
+          component={MyJobsScreen}
+          options={{ title: 'My Gigs & Applications' }}
+        />
+        <Stack.Screen
+          name="ChatRoom"
+          component={ChatRoomScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="LeaveReview"
+          component={LeaveReviewScreen}
+          options={{ title: 'Leave Review' }}
+        />
+        <Stack.Screen
+          name="Notifications"
+          component={NotificationScreen}
+          options={{ title: 'Notifications' }}
+        />
+        <Stack.Screen
+          name="UserProfile"
+          component={UserProfileScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Auth Screens (Action-Gated entry points) */}
+        <Stack.Screen
+          name="Landing"
+          component={LandingScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

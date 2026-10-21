@@ -18,6 +18,8 @@ import {
   validateTaskDescription,
   validateBudget,
 } from '../../utils/validators';
+import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
+import { TrustActionModal } from '../../components/trust/TrustActionModal';
 
 const CATEGORIES = ['Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tech Help', 'General'];
 
@@ -40,6 +42,14 @@ export const CreateTaskScreen = ({ navigation }: any) => {
   const [errors, setErrors] = useState<TaskFormErrors>({});
 
   const { createTask, isLoading } = useTaskStore();
+
+  const {
+    modalMode,
+    actionTitle,
+    requireTrustAction,
+    closeModal,
+    handleVerificationSuccess,
+  } = useRequireTrustAction();
 
   useEffect(() => {
     (async () => {
@@ -93,22 +103,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleSubmit = async () => {
-    const titleErr = validateTaskTitle(title);
-    const budgetErr = validateBudget(budget);
-    const descErr = validateTaskDescription(description);
-    const locationErr = !locationName.trim() ? 'Please provide a neighborhood or address area.' : null;
-
-    if (titleErr || budgetErr || descErr || locationErr) {
-      setErrors({
-        title: titleErr || undefined,
-        budget: budgetErr || undefined,
-        description: descErr || undefined,
-        location: locationErr || undefined,
-      });
-      return;
-    }
-
+  const doPublishTask = async () => {
     setErrors({});
     const numBudget = parseFloat(budget.trim());
 
@@ -127,7 +122,31 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       Alert.alert('Task Posted! 🎉', 'Your task is now visible to nearby neighbors.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
+    } else {
+      const currentError = useTaskStore.getState().error;
+      Alert.alert('Unable to Post Task', currentError || 'Failed to post task. Please verify your details.');
     }
+  };
+
+  const handleSubmit = async () => {
+    const titleErr = validateTaskTitle(title);
+    const budgetErr = validateBudget(budget);
+    const descErr = validateTaskDescription(description);
+    const locationErr = !locationName.trim() ? 'Please provide a neighborhood or address area.' : null;
+
+    if (titleErr || budgetErr || descErr || locationErr) {
+      setErrors({
+        title: titleErr || undefined,
+        budget: budgetErr || undefined,
+        description: descErr || undefined,
+        location: locationErr || undefined,
+      });
+      return;
+    }
+
+    requireTrustAction(() => {
+      doPublishTask();
+    }, 'publish a task');
   };
 
   return (
@@ -258,6 +277,14 @@ export const CreateTaskScreen = ({ navigation }: any) => {
           <Text style={styles.submitButtonText}>Publish Task</Text>
         )}
       </TouchableOpacity>
+
+      <TrustActionModal
+        mode={modalMode}
+        actionTitle={actionTitle}
+        onClose={closeModal}
+        onVerificationSuccess={handleVerificationSuccess}
+        navigation={navigation}
+      />
     </ScrollView>
   );
 };

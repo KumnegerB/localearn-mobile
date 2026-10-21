@@ -46,6 +46,30 @@ export const InboxScreen = ({ navigation }: any) => {
     });
   }, [conversations]);
 
+  // If guest / unauthenticated, show a clean guest card
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.guestContainer}>
+          <View style={styles.guestIconBox}>
+            <Ionicons name="chatbubbles-outline" size={54} color="#103B31" />
+          </View>
+          <Text style={styles.guestTitle}>Sign in to view messages</Text>
+          <Text style={styles.guestSubtitle}>
+            Direct 1-on-1 messaging unlocks when you coordinate gigs with neighbors.
+          </Text>
+          <TouchableOpacity
+            style={styles.guestSignInBtn}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.guestSignInBtnText}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {isLoading && !refreshing && uniqueConversations.length === 0 ? (
@@ -245,6 +269,51 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     textAlign: 'center',
     marginTop: 6,
+  },
+  guestContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+  },
+  guestIconBox: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#f2f7f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  guestTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  guestSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  guestSignInBtn: {
+    backgroundColor: '#103B31',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  guestSignInBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

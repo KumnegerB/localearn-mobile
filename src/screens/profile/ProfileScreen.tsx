@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
 import { validateFullName } from '../../utils/validators';
+import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
+import { TrustActionModal } from '../../components/trust/TrustActionModal';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -37,6 +39,14 @@ const PRESET_SKILLS = [
 
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
+
+  const {
+    modalMode,
+    actionTitle,
+    requireTrustAction,
+    closeModal,
+    handleVerificationSuccess,
+  } = useRequireTrustAction();
 
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -134,6 +144,31 @@ export const ProfileScreen = ({ navigation }: any) => {
     }
   };
 
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.guestContainer}>
+          <View style={styles.guestIconBox}>
+            <Ionicons name="person-circle-outline" size={68} color="#103B31" />
+          </View>
+          <Text style={styles.guestTitle}>Welcome to ስራ (LocalEarn)</Text>
+          <Text style={styles.guestSubtitle}>
+            Sign in to build your profile, showcase your skills, track earnings, and coordinate with neighbors.
+          </Text>
+          <TouchableOpacity
+            style={styles.guestSignInBtn}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.guestSignInBtnText}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const isVerified = Boolean(user.is_verified || user.telegram_username);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Profile Hero Card with Pen in Top Right */}
@@ -160,6 +195,29 @@ export const ProfileScreen = ({ navigation }: any) => {
               : '★ New Member'}
           </Text>
         </View>
+
+        {/* Verification Status Pill */}
+        <TouchableOpacity
+          style={[styles.verifiedPill, !isVerified && styles.unverifiedPill]}
+          activeOpacity={0.8}
+          onPress={() => {
+            if (!isVerified) {
+              requireTrustAction(() => {}, 'verify your account');
+            }
+          }}
+        >
+          <Ionicons
+            name={isVerified ? 'checkmark-circle' : 'shield-outline'}
+            size={13}
+            color={isVerified ? '#059669' : '#d97706'}
+            style={{ marginRight: 4 }}
+          />
+          <Text style={[styles.verifiedPillText, !isVerified && styles.unverifiedPillText]}>
+            {isVerified
+              ? `Verified Neighbor (${user?.telegram_username || 'Linked'})`
+              : 'Unverified • Tap to Link Telegram'}
+          </Text>
+        </TouchableOpacity>
 
         {/* About Me directly under the name & rating */}
         <Text style={styles.bioText} numberOfLines={3}>
@@ -395,6 +453,14 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
       </Modal>
+
+      <TrustActionModal
+        mode={modalMode}
+        actionTitle={actionTitle}
+        onClose={closeModal}
+        onVerificationSuccess={handleVerificationSuccess}
+        navigation={navigation}
+      />
     </ScrollView>
   );
 };
@@ -474,6 +540,74 @@ const styles = StyleSheet.create({
     color: '#d97706',
     fontWeight: '700',
     fontSize: 12,
+  },
+  verifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ecfdf5',
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  unverifiedPill: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  verifiedPillText: {
+    color: '#059669',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  unverifiedPillText: {
+    color: '#d97706',
+  },
+  guestContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+  },
+  guestIconBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f2f7f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  guestTitle: {
+    fontSize: 21,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  guestSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 26,
+  },
+  guestSignInBtn: {
+    backgroundColor: '#103B31',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  guestSignInBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   bioText: {
     fontSize: 14,
