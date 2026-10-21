@@ -27,21 +27,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.categoryContainer}>
-            <Text style={styles.categoryText}>{task.category}</Text>
-          </View>
-          {task.applications_count !== undefined && (
-            <View style={styles.applicantBadge}>
-              <Ionicons name="people-outline" size={12} color="#103B31" style={{ marginRight: 3 }} />
-              <Text style={styles.applicantBadgeText}>
-                {task.applications_count} applied
-              </Text>
-            </View>
-          )}
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryText}>{task.category}</Text>
         </View>
-        <View style={[styles.badge, { backgroundColor: getBadgeColor(task.status) }]}>
-          <Text style={styles.badgeText}>{task.status}</Text>
+        <View style={styles.headerRight}>
+          <View style={[styles.badge, { backgroundColor: getBadgeColor(task.status) }]}>
+            <Text style={styles.badgeText}>{task.status}</Text>
+          </View>
+          <View style={styles.applicantBadge}>
+            <Ionicons name="person-outline" size={12} color="#103B31" style={{ marginRight: 3 }} />
+            <Text style={styles.applicantBadgeText}>
+              {task.applications_count ?? 0}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -83,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  headerLeft: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -92,8 +90,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f2f7f5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#cce3de',
