@@ -58,10 +58,15 @@ export const LoginScreen = ({ navigation }: any) => {
     setErrors({});
     const success = await login(email.trim(), password);
     if (success) {
-      if (navigation.canGoBack()) {
+      const routes = navigation.getState?.()?.routes;
+      const prevRoute = routes && routes.length > 1 ? routes[routes.length - 2]?.name : null;
+      if (prevRoute && !['Landing', 'Login', 'Register'].includes(prevRoute)) {
         navigation.goBack();
       } else {
-        navigation.navigate('Main');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
     }
   };

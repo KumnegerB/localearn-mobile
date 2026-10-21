@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { SiraLogo } from '../../components/common/SiraLogo';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const LandingScreen = ({ navigation }: any) => {
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (user) {
+      navigation.replace('Main');
+    }
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -33,15 +42,32 @@ export const LandingScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Bottom Actions: Single Continue Button to explore the app */}
+        {/* Bottom Actions: Sign In, Register, and Continue as Guest */}
         <View style={styles.bottomSection}>
           <TouchableOpacity
             style={styles.primaryButton}
             activeOpacity={0.85}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.secondaryButtonText}>Create an Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestButton}
+            activeOpacity={0.7}
             onPress={() => navigation.replace('Main')}
           >
-            <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
+            <Text style={styles.guestButtonText}>Continue as Guest</Text>
+            <Ionicons name="arrow-forward" size={15} color="#64748b" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
@@ -68,7 +94,7 @@ const styles = StyleSheet.create({
   centerContent: {
     flex: 1,
     justifyContent: 'center',
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   logoContainer: {
     alignItems: 'flex-start',
@@ -93,20 +119,20 @@ const styles = StyleSheet.create({
     maxWidth: '92%',
   },
   bottomSection: {
-    gap: 12,
+    gap: 10,
   },
   primaryButton: {
     flexDirection: 'row',
-    height: 56,
+    height: 54,
     backgroundColor: '#103B31',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#103B31',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   primaryButtonText: {
     color: '#ffffff',
@@ -128,10 +154,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  guestButton: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  guestButtonText: {
+    color: '#64748b',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   footerText: {
     textAlign: 'center',
     fontSize: 11,
     color: '#94a3b8',
-    marginTop: 6,
+    marginTop: 4,
   },
 });
