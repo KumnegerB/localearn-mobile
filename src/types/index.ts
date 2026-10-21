@@ -94,6 +94,17 @@ export interface InAppNotification {
   type?: 'MESSAGE' | 'APPLICATION_ACCEPTED' | 'NEW_CANDIDATE';
 }
 
+export interface AppNotification {
+  id: number;
+  user_id: number;
+  title: string;
+  message: string;
+  type: 'APPLICATION_ACCEPTED' | 'NEW_CANDIDATE' | string;
+  task_id?: number | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   token_type: string;

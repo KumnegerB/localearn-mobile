@@ -36,16 +36,26 @@ export const InboxScreen = ({ navigation }: any) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Deduplicate strictly by other_user.id to guarantee only one chat thread per user
+  const uniqueConversations = React.useMemo(() => {
+    const seen = new Set<number>();
+    return conversations.filter((c) => {
+      if (!c.other_user?.id || seen.has(c.other_user.id)) return false;
+      seen.add(c.other_user.id);
+      return true;
+    });
+  }, [conversations]);
+
   return (
     <View style={styles.container}>
-      {isLoading && !refreshing && conversations.length === 0 ? (
+      {isLoading && !refreshing && uniqueConversations.length === 0 ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#103B31" />
         </View>
       ) : (
         <FlatList
-          data={conversations}
-          keyExtractor={(item) => `${item.task_id}_${item.other_user.id}`}
+          data={uniqueConversations}
+          keyExtractor={(item) => item.other_user.id.toString()}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (

@@ -83,7 +83,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const isFromOther = c.last_message.sender_id !== currentUserId;
             const isNewer = c.last_message.id > state.lastKnownMessageId;
             const isCurrentlyInThisRoom =
-              state.activeChatRoom?.taskId === c.task_id &&
               state.activeChatRoom?.otherUserId === c.other_user.id;
 
             if (isFromOther && isNewer && !isCurrentlyInThisRoom) {

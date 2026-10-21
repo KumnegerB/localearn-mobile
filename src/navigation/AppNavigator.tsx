@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View, Text, AppState } from 'react-native';
+import { ActivityIndicator, View, Text, AppState, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import { useTaskStore } from '../store/useTaskStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { navigationRef } from './navigationRef';
 import { SiraLogo } from '../components/common/SiraLogo';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
@@ -24,6 +26,7 @@ import { ChatRoomScreen } from '../screens/chat/ChatRoomScreen';
 import { LeaveReviewScreen } from '../screens/task/LeaveReviewScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserProfileScreen } from '../screens/profile/UserProfileScreen';
+import { NotificationScreen } from '../screens/notifications/NotificationScreen';
 import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNavbar';
 
 const Stack = createNativeStackNavigator();
@@ -43,7 +46,7 @@ function MainTabs() {
       <Tab.Screen
         name="Explore"
         component={TaskListScreen}
-        options={{
+        options={({ navigation }: any) => ({
           headerTitle: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <SiraLogo width={42} />
@@ -52,7 +55,39 @@ function MainTabs() {
               </Text>
             </View>
           ),
-        }}
+          headerRight: () => {
+            const unreadCount = useNotificationStore((s) => s.unreadCount);
+            return (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Notifications')}
+                style={{ marginRight: 16, position: 'relative', padding: 6 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="notifications-outline" size={24} color="#103B31" />
+                {unreadCount > 0 && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      backgroundColor: '#FF6B3D',
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingHorizontal: 3,
+                    }}
+                  >
+                    <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          },
+        })}
       />
       <Tab.Screen
         name="Map"
@@ -78,24 +113,27 @@ export const AppNavigator = () => {
   const fetchConversations = useChatStore((s) => s.fetchConversations);
   const fetchMyAppliedTasks = useTaskStore((s) => s.fetchMyAppliedTasks);
   const fetchReceivedApplications = useTaskStore((s) => s.fetchReceivedApplications);
+  const pollUnreadNotifications = useNotificationStore((s) => s.pollUnreadCount);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Background polling for conversations, messages, application acceptances & candidate alerts
+  // Background polling for conversations, messages, notifications & alerts
   useEffect(() => {
     if (!user?.id) return;
 
     fetchConversations(user.id);
     fetchMyAppliedTasks();
     fetchReceivedApplications();
+    pollUnreadNotifications();
 
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') {
         fetchConversations(user.id);
         fetchMyAppliedTasks();
         fetchReceivedApplications();
+        pollUnreadNotifications();
       }
     }, 4000);
 
@@ -104,6 +142,7 @@ export const AppNavigator = () => {
         fetchConversations(user.id);
         fetchMyAppliedTasks();
         fetchReceivedApplications();
+        pollUnreadNotifications();
       }
     });
 
@@ -162,6 +201,11 @@ export const AppNavigator = () => {
               name="LeaveReview"
               component={LeaveReviewScreen}
               options={{ title: 'Leave Review' }}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationScreen}
+              options={{ title: 'Notifications' }}
             />
             <Stack.Screen
               name="UserProfile"
