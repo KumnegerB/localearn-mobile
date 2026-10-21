@@ -33,6 +33,7 @@ export interface Task {
   updated_at?: string;
   distance_km?: number | null;
   has_applied?: boolean;
+  applications_count?: number;
 }
 
 export interface Review {

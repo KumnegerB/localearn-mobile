@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Task } from '../../types';
 
 import { formatPrice } from '../../utils/currency';
@@ -26,8 +27,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
-        <View style={styles.categoryContainer}>
-          <Text style={styles.categoryText}>{task.category}</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.categoryContainer}>
+            <Text style={styles.categoryText}>{task.category}</Text>
+          </View>
+          {task.applications_count !== undefined && (
+            <View style={styles.applicantBadge}>
+              <Ionicons name="people-outline" size={12} color="#103B31" style={{ marginRight: 3 }} />
+              <Text style={styles.applicantBadgeText}>
+                {task.applications_count} applied
+              </Text>
+            </View>
+          )}
         </View>
         <View style={[styles.badge, { backgroundColor: getBadgeColor(task.status) }]}>
           <Text style={styles.badgeText}>{task.status}</Text>
@@ -71,6 +82,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  applicantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f7f5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  applicantBadgeText: {
+    color: '#103B31',
+    fontSize: 11,
+    fontWeight: '700',
   },
   categoryContainer: {
     backgroundColor: '#f2f7f5',

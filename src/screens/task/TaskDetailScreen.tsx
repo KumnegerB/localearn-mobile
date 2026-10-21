@@ -135,6 +135,14 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           <View style={styles.statusPill}>
             <Text style={styles.statusText}>{currentTask.status}</Text>
           </View>
+          {currentTask.applications_count !== undefined && (
+            <View style={styles.applicantPill}>
+              <Ionicons name="people-outline" size={13} color="#103B31" style={{ marginRight: 4 }} />
+              <Text style={styles.applicantPillText}>
+                {currentTask.applications_count} {currentTask.applications_count === 1 ? 'applicant' : 'applicants'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Title & Price */}
@@ -273,7 +281,9 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
               }
             >
               <Ionicons name="people-outline" size={18} color="#103B31" style={{ marginRight: 6 }} />
-              <Text style={styles.candidatesButtonText}>View Candidates</Text>
+              <Text style={styles.candidatesButtonText}>
+                View Candidates ({currentTask.applications_count || 0})
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -431,6 +441,21 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: '#059669',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  applicantPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f7f5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#cce3de',
+  },
+  applicantPillText: {
+    color: '#103B31',
     fontSize: 12,
     fontWeight: '700',
   },

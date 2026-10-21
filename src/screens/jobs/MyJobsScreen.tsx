@@ -193,7 +193,9 @@ export const MyJobsScreen = ({ navigation }: any) => {
                       }
                     >
                       <Ionicons name="people-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
-                      <Text style={styles.candidatesBtnText}>View Candidates / Applications</Text>
+                      <Text style={styles.candidatesBtnText}>
+                        View Candidates ({item.applications_count || 0})
+                      </Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
