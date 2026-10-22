@@ -105,51 +105,96 @@ export const TaskMapScreen = ({ navigation }: any) => {
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body, #map { width: 100%; height: 100%; background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     
-    /* Gig Bag Marker */
+    @keyframes pulseGlow {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 4px 12px rgba(16, 59, 49, 0.35);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.15);
+        box-shadow: 0 8px 20px rgba(16, 59, 49, 0.55), 0 0 0 5px rgba(16, 59, 49, 0.18);
+      }
+    }
+
+    /* Gig Bag Marker with smooth slow pulse animation */
     .bag-marker {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       background: #103B31;
       border: 2.5px solid #ffffff;
       border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(16, 59, 49, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       transform: translate(-50%, -50%);
+      animation: pulseGlow 2.8s ease-in-out infinite;
+      will-change: transform, box-shadow;
     }
     .bag-marker.selected {
       background: #E07A5F !important;
-      transform: translate(-50%, -50%) scale(1.22);
-      box-shadow: 0 6px 16px rgba(224, 122, 95, 0.5);
+      animation: none !important;
+      transform: translate(-50%, -50%) scale(1.25) !important;
+      box-shadow: 0 8px 24px rgba(224, 122, 95, 0.6) !important;
       z-index: 9999 !important;
     }
     .bag-marker svg {
-      width: 18px;
-      height: 18px;
+      width: 19px;
+      height: 19px;
       fill: #ffffff;
       display: block;
     }
 
-    /* User GPS Location Marker */
-    .user-marker {
-      width: 16px;
-      height: 16px;
-      background: #2563eb;
-      border: 3px solid #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.35);
-      transform: translate(-50%, -50%);
+    /* User GPS Pinpoint Marker */
+    .user-pinpoint {
+      cursor: pointer;
+      transform: translate(-50%, -100%);
+      transition: transform 0.15s ease;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+    }
+    .user-pinpoint:active {
+      transform: translate(-50%, -100%) scale(1.1);
+    }
+    .user-pinpoint svg {
+      display: block;
     }
 
     /* Leaflet Controls Hidden */
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-zoom { display: none !important; }
 
-    /* Custom Tooltip/Popup directly above pointer */
-    .leaflet-popup-content-wrapper {
+    /* User Location Tooltip Popup */
+    .user-location-popup .leaflet-popup-content-wrapper {
+      background: #ffffff !important;
+      border-radius: 20px !important;
+      padding: 0 !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+      border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
+    .user-location-popup .leaflet-popup-content {
+      margin: 0 !important;
+      width: auto !important;
+      padding: 7px 14px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      color: #0f172a !important;
+      white-space: nowrap !important;
+    }
+    .user-location-dot {
+      width: 8px;
+      height: 8px;
+      background: #2563eb;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Custom Job Tooltip/Popup directly above pointer */
+    .job-popup .leaflet-popup-content-wrapper {
       background: #ffffff !important;
       border-radius: 16px !important;
       padding: 0 !important;
@@ -157,7 +202,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       border: 1px solid rgba(0, 0, 0, 0.06) !important;
       overflow: hidden !important;
     }
-    .leaflet-popup-content {
+    .job-popup .leaflet-popup-content {
       margin: 0 !important;
       width: 215px !important;
       padding: 12px 14px !important;
@@ -267,13 +312,23 @@ export const TaskMapScreen = ({ navigation }: any) => {
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(map);
 
-    // User GPS Location Marker
-    var userIcon = L.divIcon({
+    // User GPS Pinpoint Marker with "Your location" Tooltip
+    var userPinIcon = L.divIcon({
       className: '',
-      html: '<div class="user-marker"></div>',
+      html: '<div class="user-pinpoint"><svg width="32" height="38" viewBox="0 0 24 28" fill="none"><path d="M12 0C5.37 0 0 5.37 0 12C0 19.5 10.5 27.2 11.25 27.75C11.7 28.08 12.3 28.08 12.75 27.75C13.5 27.2 24 19.5 24 12C24 5.37 18.63 0 12 0Z" fill="#2563eb" stroke="#ffffff" stroke-width="1.8"/><circle cx="12" cy="11" r="4.2" fill="#ffffff"/></svg></div>',
       iconSize: [0, 0]
     });
-    L.marker([${userLocation.latitude}, ${userLocation.longitude}], { icon: userIcon }).addTo(map);
+    var userMarker = L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
+      icon: userPinIcon,
+      zIndexOffset: 1000
+    }).addTo(map);
+
+    userMarker.bindPopup('<span class="user-location-dot"></span><span>Your location</span>', {
+      className: 'user-location-popup',
+      offset: [0, -34],
+      closeButton: false,
+      autoPan: true
+    });
 
     // Task Markers with anchored Tooltip / Popup
     var tasks = ${tasksJson};
@@ -299,6 +354,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
 
       // Auto-closes previously open popups, offsets directly above the bag marker
       marker.bindPopup(popupHtml, {
+        className: 'job-popup',
         offset: [0, -20],
         closeButton: true,
         autoPan: true,
@@ -320,6 +376,9 @@ export const TaskMapScreen = ({ navigation }: any) => {
 
     window.recenterMap = function(lat, lng) {
       map.setView([lat, lng], 16, { animate: true });
+      if (userMarker) {
+        userMarker.setLatLng([lat, lng]);
+      }
     };
   </script>
 </body>
