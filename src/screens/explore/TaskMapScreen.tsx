@@ -116,7 +116,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       }
     }
 
-    /* Gig Bag Marker with smooth slow pulse animation */
+    /* Gig Bag Marker with smooth slow pulse animation - ALWAYS ON TOP */
     .bag-marker {
       width: 38px;
       height: 38px;
@@ -131,6 +131,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       transform: translate(-50%, -50%);
       animation: pulseGlow 2.8s ease-in-out infinite;
       will-change: transform, box-shadow;
+      z-index: 2500 !important;
     }
     .bag-marker.selected {
       background: #E07A5F !important;
@@ -152,6 +153,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       transform: translate(-50%, -100%);
       transition: transform 0.15s ease;
       filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+      z-index: 100 !important;
     }
     .user-pinpoint:active {
       transform: translate(-50%, -100%) scale(1.1);
@@ -320,7 +322,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
     });
     var userMarker = L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
       icon: userPinIcon,
-      zIndexOffset: 1000
+      zIndexOffset: 100
     }).addTo(map);
 
     userMarker.bindPopup('<span class="user-location-dot"></span><span>Your location</span>', {
@@ -330,7 +332,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       autoPan: true
     });
 
-    // Task Markers with anchored Tooltip / Popup
+    // Task Markers with anchored Tooltip / Popup - ALWAYS ON TOP of person location
     var tasks = ${tasksJson};
 
     tasks.forEach(function(t) {
@@ -341,7 +343,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
         iconSize: [0, 0]
       });
 
-      var marker = L.marker([t.lat, t.lng], { icon: icon, zIndexOffset: 500 }).addTo(map);
+      var marker = L.marker([t.lat, t.lng], { icon: icon, zIndexOffset: 3000 }).addTo(map);
 
       var popupHtml = 
         '<div class="popup-category">' + escapeHtml(t.category) + '</div>' +
@@ -362,13 +364,15 @@ export const TaskMapScreen = ({ navigation }: any) => {
         autoPanPaddingBottomRight: [20, 75]
       });
 
-      // Highlight pin when its popup is open
+      // Highlight pin and bring to top-most z-index when open
       marker.on('popupopen', function() {
+        marker.setZIndexOffset(6000);
         var el = document.getElementById('pin-' + t.id);
         if (el) el.classList.add('selected');
       });
 
       marker.on('popupclose', function() {
+        marker.setZIndexOffset(3000);
         var el = document.getElementById('pin-' + t.id);
         if (el) el.classList.remove('selected');
       });
