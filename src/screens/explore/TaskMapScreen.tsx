@@ -154,9 +154,8 @@ export const TaskMapScreen = ({ navigation }: any) => {
       attributionControl: false
     }).setView([${userLocation.latitude}, ${userLocation.longitude}], 13);
 
-    L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd'
+    L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+      maxZoom: 19
     }).addTo(map);
 
     // User GPS Marker
