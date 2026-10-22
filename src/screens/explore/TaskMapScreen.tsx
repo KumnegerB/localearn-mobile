@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ActivityIndicator, Platform } from 'react-native';
 import MapView, { Marker, Callout, UrlTile } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useTaskStore } from '../../store/useTaskStore';
@@ -53,6 +53,8 @@ export const TaskMapScreen = ({ navigation }: any) => {
     <View style={styles.container}>
       <MapView
         style={styles.map}
+        userInterfaceStyle="light"
+        mapType={Platform.OS === 'android' ? 'none' : 'standard'}
         initialRegion={{
           latitude: userLocation.latitude,
           longitude: userLocation.longitude,
@@ -63,10 +65,12 @@ export const TaskMapScreen = ({ navigation }: any) => {
         showsMyLocationButton
       >
         <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          urlTemplate="https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
           maximumZ={19}
+          tileSize={256}
+          shouldReplaceMapContent={true}
           flipY={false}
-          zIndex={-1}
+          zIndex={1}
         />
         {mapTasks.map((task) => (
           <Marker
@@ -117,7 +121,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   markerContainer: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#103B31',
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 12,
@@ -150,12 +154,13 @@ const styles = StyleSheet.create({
   calloutPrice: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#10b981',
+    color: '#103B31',
     marginTop: 4,
   },
   calloutLink: {
     fontSize: 11,
-    color: '#2563eb',
+    color: '#E07A5F',
+    fontWeight: '600',
     marginTop: 4,
   },
 });
