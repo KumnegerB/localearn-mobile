@@ -105,28 +105,32 @@ export const TaskMapScreen = ({ navigation }: any) => {
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body, #map { width: 100%; height: 100%; background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     
-    /* Price Badge Marker */
-    .price-pill {
+    /* Gig Bag Marker */
+    .bag-marker {
+      width: 36px;
+      height: 36px;
       background: #103B31;
-      color: #ffffff;
-      padding: 5px 9px;
-      border-radius: 14px;
-      font-weight: 800;
-      font-size: 12px;
-      border: 2px solid #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.28);
-      white-space: nowrap;
-      cursor: pointer;
-      display: inline-flex;
+      border: 2.5px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
       align-items: center;
-      transition: all 0.2s ease;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       transform: translate(-50%, -50%);
     }
-    .price-pill.selected {
+    .bag-marker.selected {
       background: #E07A5F !important;
-      transform: translate(-50%, -50%) scale(1.15);
-      box-shadow: 0 6px 14px rgba(224, 122, 95, 0.45);
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 6px 16px rgba(224, 122, 95, 0.5);
       z-index: 9999 !important;
+    }
+    .bag-marker svg {
+      width: 18px;
+      height: 18px;
+      fill: #ffffff;
+      display: block;
     }
 
     /* User GPS Location Marker */
@@ -274,13 +278,14 @@ export const TaskMapScreen = ({ navigation }: any) => {
     var tasks = ${tasksJson};
 
     tasks.forEach(function(t) {
+      var bagSvg = '<svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>';
       var icon = L.divIcon({
         className: '',
-        html: '<div class="price-pill" id="pin-' + t.id + '">' + t.price + '</div>',
+        html: '<div class="bag-marker" id="pin-' + t.id + '">' + bagSvg + '</div>',
         iconSize: [0, 0]
       });
 
-      var marker = L.marker([t.lat, t.lng], { icon: icon }).addTo(map);
+      var marker = L.marker([t.lat, t.lng], { icon: icon, zIndexOffset: 500 }).addTo(map);
 
       var popupHtml = 
         '<div class="popup-category">' + escapeHtml(t.category) + '</div>' +
@@ -291,9 +296,9 @@ export const TaskMapScreen = ({ navigation }: any) => {
         '</div>' +
         '<div class="popup-btn" onclick="openTask(' + t.id + ')">View Details &rarr;</div>';
 
-      // Auto-closes previously open popups, offsets directly above the pointer
+      // Auto-closes previously open popups, offsets directly above the bag marker
       marker.bindPopup(popupHtml, {
-        offset: [0, -14],
+        offset: [0, -20],
         closeButton: true,
         autoPan: true,
         autoPanPaddingTopLeft: [20, 20],
