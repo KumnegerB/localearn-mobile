@@ -27,6 +27,7 @@ import { LeaveReviewScreen } from '../screens/task/LeaveReviewScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserProfileScreen } from '../screens/profile/UserProfileScreen';
 import { NotificationScreen } from '../screens/notifications/NotificationScreen';
+import { RulesAndResponsibilitiesScreen } from '../screens/rules/RulesAndResponsibilitiesScreen';
 import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNavbar';
 
 const Stack = createNativeStackNavigator();
@@ -214,6 +215,13 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="UserProfile"
           component={UserProfileScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Rules & Responsibilities Screen */}
+        <Stack.Screen
+          name="RulesAndResponsibilities"
+          component={RulesAndResponsibilitiesScreen}
           options={{ headerShown: false }}
         />
 

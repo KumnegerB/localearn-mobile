@@ -162,6 +162,15 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <Text style={styles.guestSignInBtnText}>Sign In / Register</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestRulesBtn}
+            onPress={() => navigation.navigate('RulesAndResponsibilities', { isFirstTime: false })}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="shield-checkmark-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
+            <Text style={styles.guestRulesBtnText}>Rules & Responsibilities</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -287,6 +296,24 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
       </View>
+
+      {/* Rules & Responsibilities Card */}
+      <TouchableOpacity
+        style={styles.myGigsCard}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('RulesAndResponsibilities', { isFirstTime: false })}
+      >
+        <View style={styles.myGigsLeft}>
+          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#e8f3ef' }]}>
+            <Ionicons name="shield-checkmark" size={22} color="#103B31" />
+          </View>
+          <View>
+            <Text style={styles.myGigsTitle}>Rules & Responsibilities</Text>
+            <Text style={styles.myGigsSubtitle}>Community safety and platform terms</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+      </TouchableOpacity>
 
       {/* Log Out Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -607,6 +634,18 @@ const styles = StyleSheet.create({
   guestSignInBtnText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '700',
+  },
+  guestRulesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  guestRulesBtnText: {
+    color: '#103B31',
+    fontSize: 14,
     fontWeight: '700',
   },
   bioText: {

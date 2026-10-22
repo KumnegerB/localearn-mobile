@@ -90,16 +90,10 @@ export const RegisterScreen = ({ navigation }: any) => {
     setErrors({});
     const success = await register(fullName.trim(), email.trim(), password, phoneNumber.trim() || undefined);
     if (success) {
-      const routes = navigation.getState?.()?.routes;
-      const prevRoute = routes && routes.length > 1 ? routes[routes.length - 2]?.name : null;
-      if (prevRoute && !['Landing', 'Login', 'Register'].includes(prevRoute)) {
-        navigation.goBack();
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      }
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'RulesAndResponsibilities', params: { isFirstTime: true } }],
+      });
     }
   };
 
