@@ -5,8 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Dimensions,
-  Platform,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
@@ -14,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
-import { Task } from '../../types';
 
 export const TaskMapScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks } = useTaskStore();
@@ -22,7 +19,6 @@ export const TaskMapScreen = ({ navigation }: any) => {
   const webViewRef = useRef<WebView>(null);
 
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Self-exclusion: filter out tasks created by the logged-in user
@@ -41,13 +37,13 @@ export const TaskMapScreen = ({ navigation }: any) => {
           setUserLocation(coords);
           await fetchTasks({ lat: coords.latitude, lng: coords.longitude, radius_km: 30 });
         } else {
-          // Default to fallback coordinates if permission denied
-          const fallback = { latitude: 37.7749, longitude: -122.4194 };
+          // Default fallback coordinates (Addis Ababa / standard area)
+          const fallback = { latitude: 9.0300, longitude: 38.7400 };
           setUserLocation(fallback);
           await fetchTasks();
         }
       } catch {
-        const fallback = { latitude: 37.7749, longitude: -122.4194 };
+        const fallback = { latitude: 9.0300, longitude: 38.7400 };
         setUserLocation(fallback);
         await fetchTasks();
       } finally {
@@ -59,15 +55,10 @@ export const TaskMapScreen = ({ navigation }: any) => {
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'SELECT_TASK') {
-        const matched = mapTasks.find((t) => t.id === data.taskId);
-        if (matched) {
-          setSelectedTask(matched);
-        }
-      } else if (data.type === 'DESELECT') {
-        setSelectedTask(null);
+      if (data.type === 'OPEN_TASK') {
+        navigation.navigate('TaskDetail', { taskId: data.taskId });
       }
-    } catch (e) {
+    } catch {
       // Ignored
     }
   };
@@ -89,11 +80,13 @@ export const TaskMapScreen = ({ navigation }: any) => {
     );
   }
 
-  // HTML content for Leaflet Map
+  // HTML content for Leaflet Map with street-level zoom and anchored tooltips
   const tasksJson = JSON.stringify(
     mapTasks.map((t) => ({
       id: t.id,
       title: t.title,
+      category: t.category,
+      location: t.location_name || 'Neighborhood area',
       price: formatPrice(t.budget, t.currency),
       lat: t.latitude,
       lng: t.longitude,
@@ -111,6 +104,8 @@ export const TaskMapScreen = ({ navigation }: any) => {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body, #map { width: 100%; height: 100%; background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+    
+    /* Price Badge Marker */
     .price-pill {
       background: #103B31;
       color: #ffffff;
@@ -129,10 +124,12 @@ export const TaskMapScreen = ({ navigation }: any) => {
     }
     .price-pill.selected {
       background: #E07A5F !important;
-      transform: translate(-50%, -50%) scale(1.18);
+      transform: translate(-50%, -50%) scale(1.15);
       box-shadow: 0 6px 14px rgba(224, 122, 95, 0.45);
       z-index: 9999 !important;
     }
+
+    /* User GPS Location Marker */
     .user-marker {
       width: 16px;
       height: 16px;
@@ -142,23 +139,130 @@ export const TaskMapScreen = ({ navigation }: any) => {
       box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.35);
       transform: translate(-50%, -50%);
     }
+
+    /* Leaflet Controls Hidden */
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-zoom { display: none !important; }
+
+    /* Custom Tooltip/Popup directly above pointer */
+    .leaflet-popup-content-wrapper {
+      background: #ffffff !important;
+      border-radius: 16px !important;
+      padding: 0 !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+      border: 1px solid rgba(0, 0, 0, 0.06) !important;
+      overflow: hidden !important;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 215px !important;
+      padding: 12px 14px !important;
+      line-height: 1.3 !important;
+    }
+    .leaflet-popup-tip-container {
+      width: 20px !important;
+      height: 10px !important;
+    }
+    .leaflet-popup-tip {
+      background: #ffffff !important;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+      color: #94a3b8 !important;
+      padding: 6px 8px 0 0 !important;
+      font-size: 16px !important;
+    }
+
+    .popup-category {
+      display: inline-block;
+      background: #f2f7f5;
+      color: #103B31;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .popup-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 6px;
+    }
+    .popup-location {
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .popup-price {
+      font-size: 14px;
+      font-weight: 900;
+      color: #103B31;
+      white-space: nowrap;
+    }
+    .popup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      background: #103B31;
+      color: #ffffff !important;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 8px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(16, 59, 49, 0.25);
+    }
+    .popup-btn:active {
+      background: #0b261f;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function openTask(id) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'OPEN_TASK', taskId: id }));
+    }
+
+    // Street-level initial zoom (16)
     var map = L.map('map', {
       zoomControl: false,
       attributionControl: false
-    }).setView([${userLocation.latitude}, ${userLocation.longitude}], 13);
+    }).setView([${userLocation.latitude}, ${userLocation.longitude}], 16);
 
+    // OpenStreetMap DE tiles (100% free, no API keys, no watermark)
     L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(map);
 
-    // User GPS Marker
+    // User GPS Location Marker
     var userIcon = L.divIcon({
       className: '',
       html: '<div class="user-marker"></div>',
@@ -166,32 +270,50 @@ export const TaskMapScreen = ({ navigation }: any) => {
     });
     L.marker([${userLocation.latitude}, ${userLocation.longitude}], { icon: userIcon }).addTo(map);
 
-    // Task Markers
+    // Task Markers with anchored Tooltip / Popup
     var tasks = ${tasksJson};
-    var selectedId = ${selectedTask ? selectedTask.id : 'null'};
 
     tasks.forEach(function(t) {
-      var isSel = (t.id === selectedId);
-      var cls = isSel ? 'price-pill selected' : 'price-pill';
       var icon = L.divIcon({
         className: '',
-        html: '<div class="' + cls + '" id="pin-' + t.id + '">' + t.price + '</div>',
+        html: '<div class="price-pill" id="pin-' + t.id + '">' + t.price + '</div>',
         iconSize: [0, 0]
       });
 
       var marker = L.marker([t.lat, t.lng], { icon: icon }).addTo(map);
-      marker.on('click', function(e) {
-        L.DomEvent.stopPropagation(e);
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SELECT_TASK', taskId: t.id }));
+
+      var popupHtml = 
+        '<div class="popup-category">' + escapeHtml(t.category) + '</div>' +
+        '<div class="popup-title">' + escapeHtml(t.title) + '</div>' +
+        '<div class="popup-meta">' +
+          '<div class="popup-location">📍 ' + escapeHtml(t.location) + '</div>' +
+          '<div class="popup-price">' + t.price + '</div>' +
+        '</div>' +
+        '<div class="popup-btn" onclick="openTask(' + t.id + ')">View Details &rarr;</div>';
+
+      // Auto-closes previously open popups, offsets directly above the pointer
+      marker.bindPopup(popupHtml, {
+        offset: [0, -14],
+        closeButton: true,
+        autoPan: true,
+        autoPanPaddingTopLeft: [20, 20],
+        autoPanPaddingBottomRight: [20, 75]
+      });
+
+      // Highlight pin when its popup is open
+      marker.on('popupopen', function() {
+        var el = document.getElementById('pin-' + t.id);
+        if (el) el.classList.add('selected');
+      });
+
+      marker.on('popupclose', function() {
+        var el = document.getElementById('pin-' + t.id);
+        if (el) el.classList.remove('selected');
       });
     });
 
-    map.on('click', function() {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'DESELECT' }));
-    });
-
     window.recenterMap = function(lat, lng) {
-      map.setView([lat, lng], 14, { animate: true });
+      map.setView([lat, lng], 16, { animate: true });
     };
   </script>
 </body>
@@ -241,46 +363,6 @@ export const TaskMapScreen = ({ navigation }: any) => {
           <Ionicons name="refresh" size={18} color="#103B31" />
         </TouchableOpacity>
       </View>
-
-      {/* Bottom Floating Task Detail Card */}
-      {selectedTask && (
-        <View style={styles.floatingCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.categoryPill}>
-              <Text style={styles.categoryText}>{selectedTask.category}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setSelectedTask(null)}
-              style={styles.closeBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="close" size={18} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {selectedTask.title}
-          </Text>
-
-          <View style={styles.cardMetaRow}>
-            <Text style={styles.cardLocation} numberOfLines={1}>
-              📍 {selectedTask.location_name || 'Neighborhood area'}
-            </Text>
-            <Text style={styles.cardPrice}>
-              {formatPrice(selectedTask.budget, selectedTask.currency)}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.viewDetailBtn}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('TaskDetail', { taskId: selectedTask.id })}
-          >
-            <Text style={styles.viewDetailBtnText}>View Details</Text>
-            <Ionicons name="arrow-forward" size={16} color="#ffffff" style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
@@ -348,77 +430,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 6,
     elevation: 4,
-  },
-  floatingCard: {
-    position: 'absolute',
-    bottom: 24,
-    left: 16,
-    right: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 20,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  categoryPill: {
-    backgroundColor: '#f2f7f5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  categoryText: {
-    color: '#103B31',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  cardLocation: {
-    fontSize: 13,
-    color: '#64748b',
-    flex: 1,
-    marginRight: 8,
-  },
-  cardPrice: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#103B31',
-  },
-  viewDetailBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#103B31',
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  viewDetailBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
   },
 });
