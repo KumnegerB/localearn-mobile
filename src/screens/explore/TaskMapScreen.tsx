@@ -261,9 +261,10 @@ export const TaskMapScreen = ({ navigation }: any) => {
       attributionControl: false
     }).setView([${userLocation.latitude}, ${userLocation.longitude}], 16);
 
-    // OpenStreetMap DE tiles (100% free, no API keys, no watermark)
-    L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-      maxZoom: 19
+    // Google Maps Roadmap Layer (Full building names, landmarks, businesses - 0 API key required)
+    L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(map);
 
     // User GPS Location Marker
