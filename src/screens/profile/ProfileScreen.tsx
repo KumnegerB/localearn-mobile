@@ -19,7 +19,6 @@ import { validateFullName, validateUsername } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
-import { LanguageSelectorModal } from '../../components/common/LanguageSelectorModal';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -47,7 +46,6 @@ const SUPPORT_EMAIL = 'kb.productions.work@gmail.com';
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
   const { t, language } = useTranslation();
-  const [langModalVisible, setLangModalVisible] = useState(false);
   const [contactModalVisible, setContactModalVisible] = useState(false);
 
   const handleSendEmail = () => {
@@ -320,31 +318,6 @@ export const ProfileScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Language Selector Card */}
-      <TouchableOpacity
-        style={styles.myGigsCard}
-        activeOpacity={0.8}
-        onPress={() => setLangModalVisible(true)}
-      >
-        <View style={styles.myGigsLeft}>
-          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#e8f3ef' }]}>
-            <Ionicons name="globe-outline" size={22} color="#103B31" />
-          </View>
-          <View>
-            <Text style={styles.myGigsTitle}>{t('profile.language')}</Text>
-            <Text style={styles.myGigsSubtitle}>
-              {language === 'am' ? 'አማርኛ (Amharic)' : 'English'}
-            </Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, color: '#103B31', fontWeight: '700', marginRight: 6 }}>
-            {language === 'am' ? 'አማ' : 'EN'}
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-        </View>
-      </TouchableOpacity>
-
       {/* Rules & Responsibilities Card */}
       <TouchableOpacity
         style={styles.myGigsCard}
@@ -581,11 +554,6 @@ export const ProfileScreen = ({ navigation }: any) => {
         onClose={closeModal}
         onVerificationSuccess={handleVerificationSuccess}
         navigation={navigation}
-      />
-
-      <LanguageSelectorModal
-        visible={langModalVisible}
-        onClose={() => setLangModalVisible(false)}
       />
 
       {/* Contact Us Modal */}
