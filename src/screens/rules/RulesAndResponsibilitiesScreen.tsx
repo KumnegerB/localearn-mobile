@@ -15,9 +15,6 @@ import { useTranslation } from '../../i18n';
 
 interface RuleItem {
   id: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  badgeBg: string;
   titleKey: string;
   descKey: string;
 }
@@ -25,49 +22,31 @@ interface RuleItem {
 const RULE_CONFIGS: RuleItem[] = [
   {
     id: 'payment',
-    icon: 'wallet-outline',
-    iconColor: '#103B31',
-    badgeBg: '#e8f3ef',
     titleKey: 'rules.rule1Title',
     descKey: 'rules.rule1Desc',
   },
   {
     id: 'report',
-    icon: 'alert-circle-outline',
-    iconColor: '#dc2626',
-    badgeBg: '#fee2e2',
     titleKey: 'rules.rule2Title',
     descKey: 'rules.rule2Desc',
   },
   {
     id: 'respect',
-    icon: 'heart-outline',
-    iconColor: '#103B31',
-    badgeBg: '#e8f3ef',
     titleKey: 'rules.rule3Title',
     descKey: 'rules.rule3Desc',
   },
   {
     id: 'illegal',
-    icon: 'ban-outline',
-    iconColor: '#ea580c',
-    badgeBg: '#ffedd5',
     titleKey: 'rules.rule4Title',
     descKey: 'rules.rule4Desc',
   },
   {
     id: 'completion',
-    icon: 'checkmark-done-circle-outline',
-    iconColor: '#103B31',
-    badgeBg: '#e8f3ef',
     titleKey: 'rules.rule5Title',
     descKey: 'rules.rule5Desc',
   },
   {
     id: 'safety',
-    icon: 'shield-checkmark-outline',
-    iconColor: '#2563eb',
-    badgeBg: '#dbeafe',
     titleKey: 'rules.rule6Title',
     descKey: 'rules.rule6Desc',
   },
@@ -126,9 +105,6 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
       >
         {/* Title & Introduction Banner */}
         <View style={styles.heroSection}>
-          <View style={styles.shieldIconContainer}>
-            <Ionicons name="shield-checkmark" size={32} color="#103B31" />
-          </View>
           <Text style={styles.mainTitle}>{t('rules.title')}</Text>
           <Text style={styles.welcomeSubtitle}>{t('rules.welcome')}</Text>
           <Text style={styles.leadText}>
@@ -141,9 +117,6 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
           {RULE_CONFIGS.map((rule, index) => (
             <View key={rule.id} style={styles.ruleCard}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconBadge, { backgroundColor: rule.badgeBg }]}>
-                  <Ionicons name={rule.icon} size={20} color={rule.iconColor} />
-                </View>
                 <View style={styles.ruleNumberBadge}>
                   <Text style={styles.ruleNumberText}>
                     {language === 'am' ? 'ደንብ' : 'Rule'} #{index + 1}
@@ -159,7 +132,6 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
 
         {/* Bottom Acknowledgment Notice */}
         <View style={styles.agreementNotice}>
-          <Ionicons name="information-circle-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
           <Text style={styles.agreementNoticeText}>
             {t('rules.notice')}
           </Text>
@@ -238,17 +210,7 @@ const styles = StyleSheet.create({
   heroSection: {
     alignItems: 'center',
     marginBottom: 24,
-  },
-  shieldIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#e8f3ef',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#c6e3d9',
+    paddingTop: 10,
   },
   mainTitle: {
     fontSize: 26,
@@ -288,27 +250,19 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  iconBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 8,
   },
   ruleNumberBadge: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    backgroundColor: '#e8f3ef',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   ruleNumberText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#64748b',
+    color: '#103B31',
   },
   ruleTitle: {
     fontSize: 16,
