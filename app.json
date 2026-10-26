@@ -7,9 +7,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.sira.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.sira.app",
       "userInterfaceStyle": "light",
       "adaptiveIcon": {
         "backgroundColor": "#103B31",
