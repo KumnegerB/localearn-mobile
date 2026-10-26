@@ -92,9 +92,9 @@ export const RegisterScreen = ({ navigation }: any) => {
     setErrors({});
     const success = await register(fullName.trim(), email.trim(), password, phoneNumber.trim() || undefined);
     if (success) {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'EmailVerification', params: { email: email.trim(), nextScreen: 'RulesAndResponsibilities' } }],
+      navigation.navigate('EmailVerification', {
+        email: email.trim(),
+        nextScreen: 'RulesAndResponsibilities',
       });
     }
   };

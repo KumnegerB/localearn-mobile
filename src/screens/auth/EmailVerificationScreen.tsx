@@ -101,6 +101,17 @@ export const EmailVerificationScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Register' }],
+      });
+    }
+  };
+
   const handleResend = async () => {
     if (countdown > 0 || isResending) return;
 
@@ -139,7 +150,7 @@ export const EmailVerificationScreen = ({ navigation, route }: any) => {
           <View style={styles.topBar}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={handleBack}
               activeOpacity={0.7}
             >
               <Ionicons name="arrow-back" size={22} color="#0f172a" />
@@ -267,7 +278,7 @@ export const EmailVerificationScreen = ({ navigation, route }: any) => {
           {/* Back link */}
           <TouchableOpacity
             style={styles.changeEmailBtn}
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             activeOpacity={0.7}
           >
             <Text style={styles.changeEmailText}>{t('otp.changeEmail')}</Text>
