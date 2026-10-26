@@ -100,8 +100,7 @@ export const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
 
             <View style={styles.brandPill}>
-              <SiraLogo width={30} />
-              <Text style={styles.brandPillText}>ስራ</Text>
+              <SiraLogo width={36} />
             </View>
           </View>
 

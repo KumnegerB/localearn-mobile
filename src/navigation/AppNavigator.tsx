@@ -48,14 +48,7 @@ function MainTabs() {
         name="Explore"
         component={TaskListScreen}
         options={({ navigation }: any) => ({
-          headerTitle: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <SiraLogo width={42} />
-              <Text style={{ fontSize: 18, fontWeight: '900', color: '#103B31', marginLeft: 8 }}>
-                ስራ
-              </Text>
-            </View>
-          ),
+          headerTitle: () => <SiraLogo width={50} />,
           headerRight: () => {
             const unreadCount = useNotificationStore((s) => s.unreadCount);
             return (

@@ -151,7 +151,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View style={styles.guestIconBox}>
             <Ionicons name="person-circle-outline" size={68} color="#103B31" />
           </View>
-          <Text style={styles.guestTitle}>Welcome to ስራ (LocalEarn)</Text>
+          <Text style={styles.guestTitle}>Welcome to ስራ</Text>
           <Text style={styles.guestSubtitle}>
             Sign in to build your profile, showcase your skills, track earnings, and coordinate with neighbors.
           </Text>

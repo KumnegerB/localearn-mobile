@@ -117,8 +117,7 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
         )}
 
         <View style={styles.logoPill}>
-          <SiraLogo width={28} />
-          <Text style={styles.logoPillText}>ስራ</Text>
+          <SiraLogo width={36} />
         </View>
 
         <View style={styles.backPlaceholder} />
