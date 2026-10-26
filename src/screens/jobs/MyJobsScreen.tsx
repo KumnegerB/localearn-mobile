@@ -244,7 +244,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
                   <Text style={styles.postNowBtnText}>Post a Job</Text>
                 </TouchableOpacity>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       ) : (
@@ -353,7 +353,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
                   Browse nearby gigs on the explore or map tabs and apply!
                 </Text>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}

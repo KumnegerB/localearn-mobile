@@ -149,7 +149,7 @@ export const InboxScreen = ({ navigation }: any) => {
                   Private chats between you and job posters or candidates will be organized here.
                 </Text>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}

@@ -18,7 +18,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks } = useTaskStore();
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<any>(null);
 
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loading, setLoading] = useState(true);

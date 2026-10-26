@@ -75,7 +75,7 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Top Header Bar */}
       <View style={styles.topBar}>

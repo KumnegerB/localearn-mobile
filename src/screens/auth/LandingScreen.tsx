@@ -26,7 +26,7 @@ export const LandingScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
         {/* Top bar with Language Selector */}
         <View style={styles.topBar}>

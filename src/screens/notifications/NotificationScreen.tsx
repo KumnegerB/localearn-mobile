@@ -162,7 +162,7 @@ export const NotificationScreen = ({ navigation }: any) => {
                   {t('notifications.noNotificationsSub')}
                 </Text>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}

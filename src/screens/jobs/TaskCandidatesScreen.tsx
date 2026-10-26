@@ -188,7 +188,7 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
                   When neighbors apply for this gig, their profiles and messages will appear here.
                 </Text>
               </View>
-            ) : null
+            ) : undefined
           }
         />
       )}
