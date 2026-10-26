@@ -15,6 +15,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
   verifyAccount: (telegramUsername?: string, phoneNumber?: string) => Promise<boolean>;
+  sendOTP: (email: string) => Promise<{ success: boolean; message: string }>;
+  verifyOTP: (email: string, otpCode: string) => Promise<{ success: boolean; message: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -113,6 +115,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const msg = err.response?.data?.detail || 'Failed to verify account';
       set({ error: typeof msg === 'string' ? msg : 'Verification failed' });
       return false;
+    }
+  },
+
+  sendOTP: async (email: string) => {
+    try {
+      const response = await apiClient.post('/auth/send-otp', { email });
+      return { success: true, message: response.data?.message || 'Verification code sent.' };
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Failed to send verification code.';
+      return { success: false, message: typeof msg === 'string' ? msg : 'Failed to send code.' };
+    }
+  },
+
+  verifyOTP: async (email: string, otpCode: string) => {
+    try {
+      const response = await apiClient.post('/auth/verify-otp', { email, otp_code: otpCode });
+      const updatedUser = response.data?.user;
+      if (updatedUser) {
+        set({ user: updatedUser });
+      } else if (get().user) {
+        set({ user: { ...get().user!, is_email_verified: true } });
+      }
+      return { success: true, message: response.data?.message || 'Email verified successfully.' };
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Verification failed. Please check the code.';
+      return { success: false, message: typeof msg === 'string' ? msg : 'Verification failed.' };
     }
   },
 }));

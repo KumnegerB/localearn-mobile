@@ -17,6 +17,7 @@ import { InAppNotificationBanner } from '../components/chat/InAppNotificationBan
 import { LandingScreen } from '../screens/auth/LandingScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import { EmailVerificationScreen } from '../screens/auth/EmailVerificationScreen';
 import { TaskListScreen } from '../screens/explore/TaskListScreen';
 import { TaskMapScreen } from '../screens/explore/TaskMapScreen';
 import { MyJobsScreen } from '../screens/jobs/MyJobsScreen';
@@ -256,6 +257,11 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="EmailVerification"
+          component={EmailVerificationScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

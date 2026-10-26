@@ -94,7 +94,7 @@ export const RegisterScreen = ({ navigation }: any) => {
     if (success) {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'RulesAndResponsibilities', params: { isFirstTime: true } }],
+        routes: [{ name: 'EmailVerification', params: { email: email.trim(), nextScreen: 'RulesAndResponsibilities' } }],
       });
     }
   };

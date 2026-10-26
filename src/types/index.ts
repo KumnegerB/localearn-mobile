@@ -2,12 +2,14 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
+  username?: string | null;
   bio?: string | null;
   skills?: string | null;
   avatar_url?: string | null;
   phone_number?: string | null;
   telegram_username?: string | null;
   is_verified?: boolean;
+  is_email_verified?: boolean;
   completed_tasks_count?: number;
   rating: number;
   rating_count: number;

@@ -298,6 +298,21 @@ export const ProfileScreen = ({ navigation }: any) => {
             <Text style={styles.accountLabel}>{t('auth.email')}</Text>
             <Text style={styles.accountValue}>{user?.email || 'N/A'}</Text>
           </View>
+          {user?.is_email_verified ? (
+            <View style={styles.verifiedTag}>
+              <Ionicons name="checkmark-circle" size={12} color="#15803d" style={{ marginRight: 3 }} />
+              <Text style={styles.verifiedTagText}>{language === 'am' ? 'የተረጋገጠ' : 'Verified'}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.unverifiedTag}
+              onPress={() => navigation.navigate('EmailVerification', { email: user?.email })}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="alert-circle" size={12} color="#b45309" style={{ marginRight: 3 }} />
+              <Text style={styles.unverifiedTagText}>{language === 'am' ? 'አረጋግጥ' : 'Verify'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.accountDivider} />
@@ -885,6 +900,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0f172a',
     marginTop: 1,
+  },
+  verifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+  },
+  verifiedTagText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803d',
+  },
+  unverifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  unverifiedTagText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b45309',
   },
   accountDivider: {
     height: 1,
