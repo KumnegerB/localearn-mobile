@@ -30,8 +30,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     set({ isLoading: true, error: null });
+    const cleanEmail = email.trim().toLowerCase();
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
+      const response = await apiClient.post<AuthResponse>('/auth/login', { email: cleanEmail, password });
       const { access_token, user } = response.data;
       await AsyncStorage.setItem('@localearn_token', access_token);
       set({ token: access_token, user, isLoading: false, error: null });
@@ -45,12 +46,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (fullName, email, password, phoneNumber) => {
     set({ isLoading: true, error: null });
+    const cleanEmail = email.trim().toLowerCase();
     try {
       const response = await apiClient.post<AuthResponse>('/auth/register', {
-        full_name: fullName,
-        email,
+        full_name: fullName.trim(),
+        email: cleanEmail,
         password,
-        phone_number: phoneNumber,
+        phone_number: phoneNumber?.trim() || undefined,
       });
       const { access_token, user } = response.data;
       await AsyncStorage.setItem('@localearn_token', access_token);
@@ -122,7 +124,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   sendOTP: async (email: string) => {
     try {
-      const response = await apiClient.post('/auth/send-otp', { email });
+      const cleanEmail = email.trim().toLowerCase();
+      const response = await apiClient.post('/auth/send-otp', { email: cleanEmail });
       return { success: true, message: response.data?.message || 'Verification code sent.' };
     } catch (err: any) {
       const msg = err.response?.data?.detail || 'Failed to send verification code.';
@@ -132,7 +135,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   verifyOTP: async (email: string, otpCode: string) => {
     try {
-      const response = await apiClient.post('/auth/verify-otp', { email, otp_code: otpCode });
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanCode = otpCode.replace(/\s+/g, '').trim();
+      const response = await apiClient.post('/auth/verify-otp', { email: cleanEmail, otp_code: cleanCode });
       const updatedUser = response.data?.user;
       if (updatedUser) {
         set({ user: updatedUser });

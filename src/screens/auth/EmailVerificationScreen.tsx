@@ -23,7 +23,7 @@ export const EmailVerificationScreen = ({ navigation, route }: any) => {
   const { user, sendOTP, verifyOTP } = useAuthStore();
   const { t } = useTranslation();
 
-  const userEmail = route.params?.email || user?.email || '';
+  const userEmail = (route.params?.email || user?.email || '').trim().toLowerCase();
   const nextScreen = route.params?.nextScreen || 'RulesAndResponsibilities';
 
   const [otpCode, setOtpCode] = useState('');
