@@ -94,3 +94,68 @@ export const validateBudget = (budget: string): string | null => {
   return null;
 };
 
+export const RESERVED_USERNAMES = new Set([
+  'admin',
+  'administrator',
+  'root',
+  'sira',
+  'localearn',
+  'support',
+  'help',
+  'official',
+  'system',
+  'moderator',
+  'staff',
+  'null',
+  'undefined',
+  'explore',
+  'inbox',
+  'profile',
+  'jobs',
+  'tasks',
+  'settings',
+  'api',
+  'auth',
+]);
+
+const USERNAME_ALLOWED_REGEX = /^[a-zA-Z0-9_]+$/;
+
+export const validateUsername = (rawUsername: string): { isValid: boolean; error: string | null; normalized: string } => {
+  const normalized = rawUsername.trim().toLowerCase();
+
+  if (!normalized) {
+    return { isValid: false, error: 'Username is required.', normalized };
+  }
+
+  if (normalized.length < 3) {
+    return { isValid: false, error: 'Username must be at least 3 characters long.', normalized };
+  }
+
+  if (normalized.length > 20) {
+    return { isValid: false, error: 'Username cannot exceed 20 characters.', normalized };
+  }
+
+  if (!USERNAME_ALLOWED_REGEX.test(normalized)) {
+    return { isValid: false, error: 'Username can only contain letters, numbers, and underscores.', normalized };
+  }
+
+  if (normalized.startsWith('_')) {
+    return { isValid: false, error: 'Username cannot start with an underscore.', normalized };
+  }
+
+  if (normalized.endsWith('_')) {
+    return { isValid: false, error: 'Username cannot end with an underscore.', normalized };
+  }
+
+  if (normalized.includes('__')) {
+    return { isValid: false, error: 'Username cannot contain consecutive underscores.', normalized };
+  }
+
+  if (RESERVED_USERNAMES.has(normalized)) {
+    return { isValid: false, error: 'This username is reserved. Please pick another one.', normalized };
+  }
+
+  return { isValid: true, error: null, normalized };
+};
+
+

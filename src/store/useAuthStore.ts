@@ -17,6 +17,8 @@ interface AuthState {
   verifyAccount: (telegramUsername?: string, phoneNumber?: string) => Promise<boolean>;
   sendOTP: (email: string) => Promise<{ success: boolean; message: string }>;
   verifyOTP: (email: string, otpCode: string) => Promise<{ success: boolean; message: string }>;
+  checkUsernameAvailability: (username: string) => Promise<{ available: boolean; reason?: string }>;
+  setUsername: (username: string) => Promise<{ success: boolean; message: string }>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -141,6 +143,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err: any) {
       const msg = err.response?.data?.detail || 'Verification failed. Please check the code.';
       return { success: false, message: typeof msg === 'string' ? msg : 'Verification failed.' };
+    }
+  },
+
+  checkUsernameAvailability: async (username: string) => {
+    try {
+      const response = await apiClient.get('/auth/check-username', {
+        params: { username },
+      });
+      return {
+        available: Boolean(response.data?.available),
+        reason: response.data?.reason,
+      };
+    } catch (err: any) {
+      const reason = err.response?.data?.detail || 'Unable to check username availability.';
+      return {
+        available: false,
+        reason: typeof reason === 'string' ? reason : 'Verification error',
+      };
+    }
+  },
+
+  setUsername: async (username: string) => {
+    try {
+      const response = await apiClient.post<User>('/users/me/username', { username });
+      set({ user: response.data });
+      return { success: true, message: 'Username updated successfully.' };
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Failed to set username.';
+      return { success: false, message: typeof msg === 'string' ? msg : 'Failed to set username.' };
     }
   },
 }));

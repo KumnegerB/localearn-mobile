@@ -211,6 +211,21 @@ export const ProfileScreen = ({ navigation }: any) => {
 
         <Text style={styles.name}>{user?.full_name}</Text>
 
+        {user?.username ? (
+          <Text style={styles.usernameHandle}>@{user.username}</Text>
+        ) : (
+          <TouchableOpacity
+            style={styles.setUsernamePrompt}
+            onPress={() => navigation.navigate('ChooseUsername')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="at" size={13} color="#103B31" style={{ marginRight: 2 }} />
+            <Text style={styles.setUsernamePromptText}>
+              {language === 'am' ? 'የተጠቃሚ ስም ይምረጡ' : 'Choose @username'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.ratingBadge}>
           <Text style={styles.ratingText}>
             {user?.rating_count && user.rating_count > 0
@@ -291,6 +306,29 @@ export const ProfileScreen = ({ navigation }: any) => {
       {/* Account Info Card */}
       <View style={styles.accountCard}>
         <Text style={styles.accountCardTitle}>{t('profile.accountInfo')}</Text>
+
+        <View style={styles.accountRow}>
+          <Ionicons name="at-outline" size={18} color="#64748b" style={styles.accountIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.accountLabel}>{t('username.inputLabel')}</Text>
+            <Text style={styles.accountValue}>
+              {user?.username ? `@${user.username}` : (language === 'am' ? 'አልተመረጠም' : 'Not set')}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.usernameActionBtn}
+            onPress={() => navigation.navigate('ChooseUsername')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.usernameActionBtnText}>
+              {user?.username
+                ? (language === 'am' ? 'ቀይር' : 'Change')
+                : (language === 'am' ? 'ይምረጡ' : 'Choose')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.accountDivider} />
 
         <View style={styles.accountRow}>
           <Ionicons name="mail-outline" size={18} color="#64748b" style={styles.accountIcon} />
@@ -685,6 +723,27 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     textAlign: 'center',
   },
+  usernameHandle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#103B31',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  setUsernamePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f7f5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  setUsernamePromptText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#103B31',
+  },
   ratingBadge: {
     backgroundColor: '#fef3c7',
     paddingHorizontal: 12,
@@ -900,6 +959,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0f172a',
     marginTop: 1,
+  },
+  usernameActionBtn: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  usernameActionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#103B31',
   },
   verifiedTag: {
     flexDirection: 'row',

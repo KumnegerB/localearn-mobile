@@ -74,7 +74,15 @@ export const EmailVerificationScreen = ({ navigation, route }: any) => {
     if (result.success) {
       setSuccessMessage(t('otp.verifiedSuccess'));
       setTimeout(() => {
-        if (nextScreen === 'RulesAndResponsibilities') {
+        const currentUser = useAuthStore.getState().user;
+        const hasUsername = Boolean(currentUser?.username);
+
+        if (!hasUsername) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'ChooseUsername', params: { isOnboarding: true } }],
+          });
+        } else if (nextScreen === 'RulesAndResponsibilities') {
           navigation.reset({
             index: 0,
             routes: [{ name: 'RulesAndResponsibilities', params: { isFirstTime: true } }],
