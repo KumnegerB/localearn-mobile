@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
-import { validateFullName } from '../../utils/validators';
+import { validateFullName, validateUsername } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
@@ -64,11 +64,13 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   const skillsList = (user?.skills || '')
     .split(',')
@@ -77,6 +79,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const handleOpenEdit = () => {
     setFullName(user?.full_name || '');
+    setUsername(user?.username || '');
     setBio(user?.bio || '');
     const currentSkills = (user?.skills || '')
       .split(',')
@@ -85,6 +88,7 @@ export const ProfileScreen = ({ navigation }: any) => {
     setSelectedSkills(currentSkills);
     setCustomSkillInput('');
     setNameError(null);
+    setUsernameError(null);
     setIsEditing(true);
   };
 
@@ -122,9 +126,21 @@ export const ProfileScreen = ({ navigation }: any) => {
     }
     setNameError(null);
 
+    let cleanUsername: string | undefined = undefined;
+    if (username.trim()) {
+      const userCheck = validateUsername(username);
+      if (!userCheck.isValid) {
+        setUsernameError(userCheck.error);
+        return;
+      }
+      cleanUsername = userCheck.normalized;
+    }
+    setUsernameError(null);
+
     setIsSaving(true);
     const success = await updateProfile({
       full_name: fullName.trim(),
+      username: cleanUsername,
       bio: bio.trim(),
       skills: selectedSkills.join(', '),
     });
@@ -134,7 +150,8 @@ export const ProfileScreen = ({ navigation }: any) => {
       setIsEditing(false);
       Alert.alert('Profile Updated', 'Your profile details have been saved.');
     } else {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      const storeErr = useAuthStore.getState().error;
+      Alert.alert('Error', storeErr || 'Failed to update profile. Please try again.');
     }
   };
 
@@ -216,7 +233,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         ) : (
           <TouchableOpacity
             style={styles.setUsernamePrompt}
-            onPress={() => navigation.navigate('ChooseUsername')}
+            onPress={handleOpenEdit}
             activeOpacity={0.7}
           >
             <Ionicons name="at" size={13} color="#103B31" style={{ marginRight: 2 }} />
@@ -226,36 +243,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         )}
 
-        <View style={styles.ratingBadge}>
-          <Text style={styles.ratingText}>
-            {user?.rating_count && user.rating_count > 0
-              ? `★ ${user.rating.toFixed(1)} (${user.rating_count} reviews)`
-              : '★ New Member'}
-          </Text>
-        </View>
-
-        {/* Verification Status Pill */}
-        <TouchableOpacity
-          style={[styles.verifiedPill, !isVerified && styles.unverifiedPill]}
-          activeOpacity={0.8}
-          onPress={() => {
-            if (!isVerified) {
-              requireTrustAction(() => {}, 'verify your account');
-            }
-          }}
-        >
-          <Ionicons
-            name={isVerified ? 'checkmark-circle' : 'shield-outline'}
-            size={13}
-            color={isVerified ? '#059669' : '#d97706'}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.verifiedPillText, !isVerified && styles.unverifiedPillText]}>
-            {isVerified
-              ? `Verified Neighbor (${user?.telegram_username || 'Linked'})`
-              : 'Unverified • Tap to Link Telegram'}
-          </Text>
-        </TouchableOpacity>
+        {user?.rating_count && user.rating_count > 0 ? (
+          <View style={styles.ratingBadge}>
+            <Text style={styles.ratingText}>
+              ★ {user.rating.toFixed(1)} ({user.rating_count} reviews)
+            </Text>
+          </View>
+        ) : null}
 
         {/* About Me directly under the name & rating */}
         <Text style={styles.bioText} numberOfLines={3}>
@@ -308,49 +302,11 @@ export const ProfileScreen = ({ navigation }: any) => {
         <Text style={styles.accountCardTitle}>{t('profile.accountInfo')}</Text>
 
         <View style={styles.accountRow}>
-          <Ionicons name="at-outline" size={18} color="#64748b" style={styles.accountIcon} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.accountLabel}>{t('username.inputLabel')}</Text>
-            <Text style={styles.accountValue}>
-              {user?.username ? `@${user.username}` : (language === 'am' ? 'አልተመረጠም' : 'Not set')}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.usernameActionBtn}
-            onPress={() => navigation.navigate('ChooseUsername')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.usernameActionBtnText}>
-              {user?.username
-                ? (language === 'am' ? 'ቀይር' : 'Change')
-                : (language === 'am' ? 'ይምረጡ' : 'Choose')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.accountDivider} />
-
-        <View style={styles.accountRow}>
           <Ionicons name="mail-outline" size={18} color="#64748b" style={styles.accountIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.accountLabel}>{t('auth.email')}</Text>
             <Text style={styles.accountValue}>{user?.email || 'N/A'}</Text>
           </View>
-          {user?.is_email_verified ? (
-            <View style={styles.verifiedTag}>
-              <Ionicons name="checkmark-circle" size={12} color="#15803d" style={{ marginRight: 3 }} />
-              <Text style={styles.verifiedTagText}>{language === 'am' ? 'የተረጋገጠ' : 'Verified'}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.unverifiedTag}
-              onPress={() => navigation.navigate('EmailVerification', { email: user?.email })}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="alert-circle" size={12} color="#b45309" style={{ marginRight: 3 }} />
-              <Text style={styles.unverifiedTagText}>{language === 'am' ? 'አረጋግጥ' : 'Verify'}</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         <View style={styles.accountDivider} />
@@ -444,7 +400,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             <ScrollView contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
               {/* Full Name */}
-              <Text style={styles.inputLabel}>Full Name</Text>
+              <Text style={styles.inputLabel}>{language === 'am' ? 'ሙሉ ስም' : 'Full Name'}</Text>
               <TextInput
                 style={[styles.input, !!nameError && styles.inputError]}
                 value={fullName}
@@ -458,6 +414,34 @@ export const ProfileScreen = ({ navigation }: any) => {
                 <View style={styles.inlineErrorRow}>
                   <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
                   <Text style={styles.inlineErrorText}>{nameError}</Text>
+                </View>
+              ) : null}
+
+              {/* Username */}
+              <Text style={styles.inputLabel}>{language === 'am' ? 'የተጠቃሚ ስም' : 'Username'}</Text>
+              <View style={[styles.modalUsernameBox, !!usernameError && styles.inputError]}>
+                <Text style={styles.modalAtSign}>@</Text>
+                <TextInput
+                  style={styles.modalUsernameInput}
+                  value={username}
+                  onChangeText={(val) => {
+                    const cleaned = val.replace(/\s+/g, '').toLowerCase();
+                    setUsername(cleaned);
+                    if (usernameError) setUsernameError(null);
+                  }}
+                  placeholder="username"
+                  placeholderTextColor="#94a3b8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={20}
+                  cursorColor="#103B31"
+                  selectionColor="#cce3de"
+                />
+              </View>
+              {usernameError ? (
+                <View style={styles.inlineErrorRow}>
+                  <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                  <Text style={styles.inlineErrorText}>{usernameError}</Text>
                 </View>
               ) : null}
 
@@ -1082,6 +1066,29 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: '#ef4444',
     backgroundColor: '#fef2f2',
+  },
+  modalUsernameBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  modalAtSign: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#103B31',
+    marginRight: 4,
+  },
+  modalUsernameInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#0f172a',
+    fontWeight: '600',
+    paddingVertical: 0,
   },
   inlineErrorRow: {
     flexDirection: 'row',
