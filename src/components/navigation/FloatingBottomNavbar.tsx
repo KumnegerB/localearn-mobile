@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChatStore } from '../../store/useChatStore';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../trust/TrustActionModal';
@@ -69,12 +70,16 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const unreadCount = useChatStore((s) => s.unreadCount);
   const { t } = useTranslation();
 
   const barMarginHorizontal = 18;
   const maxBarWidth = 440 - barMarginHorizontal * 2;
   const barWidth = Math.min(width - barMarginHorizontal * 2, maxBarWidth);
+
+  // Dynamic bottom offset accounting for native Android 3-button navigation bar, gesture bar, or iOS home bar
+  const bottomOffset = insets.bottom > 0 ? insets.bottom + 8 : (Platform.OS === 'ios' ? 20 : 14);
 
   const getTabConfig = (routeName: string, focused: boolean) => {
     switch (routeName) {
@@ -117,7 +122,7 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
   };
 
   return (
-    <View style={styles.floatingContainer} pointerEvents="box-none">
+    <View style={[styles.floatingContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
       <View style={[styles.navbarGlassCapsule, { width: barWidth }]}>
         {/* First 2 Tabs: Home & Search (Map) */}
         {state.routes.slice(0, 2).map((route, index) => {
@@ -202,7 +207,6 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
 const styles = StyleSheet.create({
   floatingContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 20 : 14,
     left: 0,
     right: 0,
     alignItems: 'center',
