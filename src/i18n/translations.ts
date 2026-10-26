@@ -101,6 +101,11 @@ export const translations = {
       changeLanguage: 'Choose Language / ቋንቋ ይምረጡ',
       verified: 'Verified Profile',
       unverified: 'Verification Required',
+      contactUs: 'Contact Us',
+      contactUsSub: 'Get help or send feedback',
+      contactModalTitle: 'Contact Us',
+      contactModalDesc: 'Have questions, feedback, or need help? Reach out to our team directly:',
+      sendEmailBtn: 'Send Email',
     },
     rules: {
       title: 'Rules & Responsibilities',
@@ -281,6 +286,11 @@ export const translations = {
       changeLanguage: 'Choose Language / ቋንቋ ይምረጡ',
       verified: 'የተረጋገጠ መገለጫ',
       unverified: 'ማረጋገጫ ያስፈልጋል',
+      contactUs: 'ያግኙን',
+      contactUsSub: 'እርዳታ ያግኙ ወይም አስተያየት ይላኩ',
+      contactModalTitle: 'ያግኙን',
+      contactModalDesc: 'ጥያቄ፣ አስተያየት ወይም እርዳታ ይፈልጋሉ? ቡድናችንን በቀጥታ ያግኙ፡',
+      sendEmailBtn: 'ኢሜይል ይላኩ',
     },
     rules: {
       title: 'ደንቦች እና ኃላፊነቶች',

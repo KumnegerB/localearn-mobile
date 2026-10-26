@@ -9,6 +9,9 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Linking,
+  TouchableWithoutFeedback,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -39,10 +42,17 @@ const PRESET_SKILLS = [
   'Handyman',
 ];
 
+const SUPPORT_EMAIL = 'kb.productions.work@gmail.com';
+
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
   const { t, language } = useTranslation();
   const [langModalVisible, setLangModalVisible] = useState(false);
+  const [contactModalVisible, setContactModalVisible] = useState(false);
+
+  const handleSendEmail = () => {
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('ስራ Support / Feedback')}`);
+  };
 
   const {
     modalMode,
@@ -344,6 +354,24 @@ export const ProfileScreen = ({ navigation }: any) => {
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
       </TouchableOpacity>
 
+      {/* Contact Us Card */}
+      <TouchableOpacity
+        style={styles.myGigsCard}
+        activeOpacity={0.8}
+        onPress={() => setContactModalVisible(true)}
+      >
+        <View style={styles.myGigsLeft}>
+          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#e8f3ef' }]}>
+            <Ionicons name="mail-outline" size={22} color="#103B31" />
+          </View>
+          <View>
+            <Text style={styles.myGigsTitle}>{t('profile.contactUs')}</Text>
+            <Text style={styles.myGigsSubtitle}>{t('profile.contactUsSub')}</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+      </TouchableOpacity>
+
       {/* Log Out Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={18} color="#dc2626" style={{ marginRight: 6 }} />
@@ -522,6 +550,59 @@ export const ProfileScreen = ({ navigation }: any) => {
         visible={langModalVisible}
         onClose={() => setLangModalVisible(false)}
       />
+
+      {/* Contact Us Modal */}
+      <Modal
+        visible={contactModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setContactModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setContactModalVisible(false)}>
+          <View style={styles.contactModalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.contactModalCard}>
+                {/* Header with Title and 'X' close button */}
+                <View style={styles.contactModalHeader}>
+                  <View style={styles.contactIconCircle}>
+                    <Ionicons name="mail" size={20} color="#103B31" />
+                  </View>
+                  <TouchableOpacity
+                    style={styles.contactCloseBtn}
+                    onPress={() => setContactModalVisible(false)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close" size={20} color="#64748b" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.contactTitle}>{t('profile.contactModalTitle')}</Text>
+                <Text style={styles.contactDescription}>
+                  {t('profile.contactModalDesc')}
+                </Text>
+
+                {/* Email Pill / Display */}
+                <View style={styles.emailDisplayBox}>
+                  <Ionicons name="mail-outline" size={16} color="#103B31" style={{ marginRight: 8 }} />
+                  <Text style={styles.emailDisplayText} selectable>
+                    {SUPPORT_EMAIL}
+                  </Text>
+                </View>
+
+                {/* Send Email Action Button */}
+                <TouchableOpacity
+                  style={styles.sendEmailButton}
+                  activeOpacity={0.85}
+                  onPress={handleSendEmail}
+                >
+                  <Ionicons name="paper-plane-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.sendEmailButtonText}>{t('profile.sendEmailBtn')}</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ScrollView>
   );
 };
@@ -1013,5 +1094,95 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
     fontSize: 15,
+  },
+  contactModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  contactModalCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 22,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  contactModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  contactIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#e8f3ef',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 6,
+  },
+  contactDescription: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  emailDisplayBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  emailDisplayText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#103B31',
+    flexShrink: 1,
+  },
+  sendEmailButton: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#103B31',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendEmailButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
