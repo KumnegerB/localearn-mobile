@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, AppState, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,6 +9,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useNotificationStore } from '../store/useNotificationStore';
+import { useTranslation } from '../i18n';
+import { LanguageSelectorModal } from '../components/common/LanguageSelectorModal';
 import { navigationRef } from './navigationRef';
 import { SiraLogo } from '../components/common/SiraLogo';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
@@ -33,9 +35,79 @@ import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNav
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const HeaderRightActions = ({ navigation }: { navigation: any }) => {
+  const [langModalVisible, setLangModalVisible] = useState(false);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const { language } = useTranslation();
+
+  return (
+    <>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+        {/* World / Globe language picker icon button */}
+        <TouchableOpacity
+          onPress={() => setLangModalVisible(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 5,
+            paddingHorizontal: 8,
+            borderRadius: 16,
+            backgroundColor: '#F3FAF6',
+            borderWidth: 1,
+            borderColor: '#CDE4D7',
+            marginRight: 10,
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="globe-outline" size={17} color="#103B31" style={{ marginRight: 4 }} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: '#103B31' }}>
+            {language === 'am' ? 'አማ' : 'EN'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Notifications Icon Button */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Notifications')}
+          style={{ position: 'relative', padding: 6 }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#103B31" />
+          {unreadCount > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                backgroundColor: '#FF6B3D',
+                minWidth: 16,
+                height: 16,
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <LanguageSelectorModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+      />
+    </>
+  );
+};
+
 // Bottom tabs for Explore (Home), Map (Search), Inbox, and Profile
 // (Center slot is the floating action plus button, My Jobs moved inside Profile & Stack)
 function MainTabs() {
+  const { t } = useTranslation();
+
   return (
     <Tab.Navigator
       tabBar={(props) => <FloatingBottomNavbar {...props} />}
@@ -49,60 +121,30 @@ function MainTabs() {
         component={TaskListScreen}
         options={({ navigation }: any) => ({
           headerTitle: () => <SiraLogo width={50} />,
-          headerRight: () => {
-            const unreadCount = useNotificationStore((s) => s.unreadCount);
-            return (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Notifications')}
-                style={{ marginRight: 16, position: 'relative', padding: 6 }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="notifications-outline" size={24} color="#103B31" />
-                {unreadCount > 0 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      backgroundColor: '#FF6B3D',
-                      minWidth: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      paddingHorizontal: 3,
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          },
+          headerRight: () => <HeaderRightActions navigation={navigation} />,
         })}
       />
       <Tab.Screen
         name="Map"
         component={TaskMapScreen}
-        options={{ title: 'Nearby Map' }}
+        options={{ title: t('nav.map') }}
       />
       <Tab.Screen
         name="Inbox"
         component={InboxScreen}
-        options={{ title: 'Messages' }}
+        options={{ title: t('nav.inbox') }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'My Profile' }}
+        options={{ title: t('nav.profile') }}
       />
     </Tab.Navigator>
   );
 }
 
 export const AppNavigator = () => {
+  const { t } = useTranslation();
   const { user, isCheckingAuth, checkAuth } = useAuthStore();
   const fetchConversations = useChatStore((s) => s.fetchConversations);
   const fetchMyAppliedTasks = useTaskStore((s) => s.fetchMyAppliedTasks);
@@ -173,22 +215,22 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="TaskDetail"
           component={TaskDetailScreen}
-          options={{ title: 'Task Details' }}
+          options={{ title: t('taskDetail.title') }}
         />
         <Stack.Screen
           name="CreateTask"
           component={CreateTaskScreen}
-          options={{ title: 'Post a Gig' }}
+          options={{ title: t('createTask.title') }}
         />
         <Stack.Screen
           name="TaskCandidates"
           component={TaskCandidatesScreen}
-          options={{ title: 'Candidates' }}
+          options={{ title: t('taskDetail.applicants') }}
         />
         <Stack.Screen
           name="MyJobs"
           component={MyJobsScreen}
-          options={{ title: 'My Gigs & Applications' }}
+          options={{ title: t('profile.myGigsTitle') }}
         />
         <Stack.Screen
           name="ChatRoom"
@@ -203,7 +245,7 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="Notifications"
           component={NotificationScreen}
-          options={{ title: 'Notifications' }}
+          options={{ title: t('nav.notifications') }}
         />
         <Stack.Screen
           name="UserProfile"

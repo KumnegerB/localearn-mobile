@@ -21,6 +21,7 @@ import {
   validatePassword,
 } from '../../utils/validators';
 import { SiraLogo } from '../../components/common/SiraLogo';
+import { useTranslation } from '../../i18n';
 
 interface RegisterErrors {
   fullName?: string;
@@ -30,6 +31,7 @@ interface RegisterErrors {
 }
 
 export const RegisterScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -132,9 +134,9 @@ export const RegisterScreen = ({ navigation }: any) => {
 
           {/* Heading */}
           <View style={styles.header}>
-            <Text style={styles.title}>Join ስራ 🚀</Text>
+            <Text style={styles.title}>{t('auth.joinTitle')}</Text>
             <Text style={styles.subtitle}>
-              Create your account to start picking up neighbourhood gigs or posting tasks.
+              {t('auth.registerSubtitle')}
             </Text>
           </View>
 
@@ -149,7 +151,7 @@ export const RegisterScreen = ({ navigation }: any) => {
           {/* Form */}
           <View style={styles.form}>
             {/* Full Name */}
-            <Text style={styles.inputLabel}>Full Name</Text>
+            <Text style={styles.inputLabel}>{t('auth.fullName')}</Text>
             <View style={[styles.inputBox, !!errors.fullName && styles.inputBoxError]}>
               <Ionicons
                 name="person-outline"
@@ -159,7 +161,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Alex Johnson"
+                placeholder={t('auth.fullNamePlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={fullName}
                 onChangeText={handleFullNameChange}
@@ -176,7 +178,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             ) : null}
 
             {/* Email Address */}
-            <Text style={styles.inputLabel}>Email Address</Text>
+            <Text style={styles.inputLabel}>{t('auth.email')}</Text>
             <View style={[styles.inputBox, !!errors.email && styles.inputBoxError]}>
               <Ionicons
                 name="mail-outline"
@@ -186,7 +188,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="name@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={email}
                 onChangeText={handleEmailChange}
@@ -205,7 +207,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             ) : null}
 
             {/* Phone Number (Optional) */}
-            <Text style={styles.inputLabel}>Phone Number (Optional)</Text>
+            <Text style={styles.inputLabel}>{t('auth.phoneNumber')}</Text>
             <View style={[styles.inputBox, !!errors.phoneNumber && styles.inputBoxError]}>
               <Ionicons
                 name="call-outline"
@@ -215,7 +217,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="+1 555-0199"
+                placeholder={t('auth.phonePlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={phoneNumber}
                 onChangeText={handlePhoneChange}
@@ -233,7 +235,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             ) : null}
 
             {/* Password */}
-            <Text style={styles.inputLabel}>Password</Text>
+            <Text style={styles.inputLabel}>{t('auth.password')}</Text>
             <View style={[styles.inputBox, !!errors.password && styles.inputBoxError]}>
               <Ionicons
                 name="lock-closed-outline"
@@ -243,7 +245,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Create a password (min 6 chars)"
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={password}
                 onChangeText={handlePasswordChange}
@@ -283,7 +285,7 @@ export const RegisterScreen = ({ navigation }: any) => {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <>
-                  <Text style={styles.primaryButtonText}>Create Account</Text>
+                  <Text style={styles.primaryButtonText}>{t('auth.createAccountBtn')}</Text>
                   <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
                 </>
               )}
@@ -292,9 +294,9 @@ export const RegisterScreen = ({ navigation }: any) => {
 
           {/* Footer Switcher */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={styles.footerText}>{t('auth.alreadyAccount')} </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')} activeOpacity={0.7}>
-              <Text style={styles.signInLink}>Sign In</Text>
+              <Text style={styles.signInLink}>{t('auth.signInBtn')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

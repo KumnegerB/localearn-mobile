@@ -11,11 +11,13 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useTranslation } from '../../i18n';
 import { formatPrice } from '../../utils/currency';
 
 export const TaskMapScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks } = useTaskStore();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const webViewRef = useRef<WebView>(null);
 
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -75,21 +77,21 @@ export const TaskMapScreen = ({ navigation }: any) => {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#103B31" />
-        <Text style={styles.loadingText}>Locating nearby gigs...</Text>
+        <Text style={styles.loadingText}>{t('map.locating')}</Text>
       </View>
     );
   }
 
   // HTML content for Leaflet Map with street-level zoom and anchored tooltips
   const tasksJson = JSON.stringify(
-    mapTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      category: t.category,
-      location: t.location_name || 'Neighborhood area',
-      price: formatPrice(t.budget, t.currency),
-      lat: t.latitude,
-      lng: t.longitude,
+    mapTasks.map((taskItem) => ({
+      id: taskItem.id,
+      title: taskItem.title,
+      category: taskItem.category,
+      location: taskItem.location_name || t('common.neighborhood'),
+      price: formatPrice(taskItem.budget, taskItem.currency),
+      lat: taskItem.latitude,
+      lng: taskItem.longitude,
     }))
   );
 
@@ -325,7 +327,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
       zIndexOffset: 100
     }).addTo(map);
 
-    userMarker.bindPopup('<span class="user-location-dot"></span><span>Your location</span>', {
+    userMarker.bindPopup('<span class="user-location-dot"></span><span>' + ${JSON.stringify(t('map.yourLocation'))} + '</span>', {
       className: 'user-location-popup',
       offset: [0, -34],
       closeButton: false,
@@ -352,7 +354,7 @@ export const TaskMapScreen = ({ navigation }: any) => {
           '<div class="popup-location">📍 ' + escapeHtml(t.location) + '</div>' +
           '<div class="popup-price">' + t.price + '</div>' +
         '</div>' +
-        '<div class="popup-btn" onclick="openTask(' + t.id + ')">View Details &rarr;</div>';
+        '<div class="popup-btn" onclick="openTask(' + t.id + ')">' + ${JSON.stringify(t('common.viewDetails'))} + ' &rarr;</div>';
 
       // Auto-closes previously open popups, offsets directly above the bag marker
       marker.bindPopup(popupHtml, {
@@ -409,7 +411,9 @@ export const TaskMapScreen = ({ navigation }: any) => {
         <View style={styles.topBadge}>
           <Ionicons name="map" size={14} color="#103B31" style={{ marginRight: 6 }} />
           <Text style={styles.topBadgeText}>
-            {mapTasks.length} {mapTasks.length === 1 ? 'gig' : 'gigs'} nearby
+            {mapTasks.length === 1
+              ? t('map.oneGigNearby')
+              : t('map.gigsNearby', { count: mapTasks.length })}
           </Text>
         </View>
       </View>

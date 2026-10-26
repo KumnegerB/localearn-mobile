@@ -15,6 +15,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { validateFullName } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
+import { useTranslation } from '../../i18n';
+import { LanguageSelectorModal } from '../../components/common/LanguageSelectorModal';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -39,6 +41,8 @@ const PRESET_SKILLS = [
 
 export const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateProfile } = useAuthStore();
+  const { t, language } = useTranslation();
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const {
     modalMode,
@@ -151,16 +155,16 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View style={styles.guestIconBox}>
             <Ionicons name="person-circle-outline" size={68} color="#103B31" />
           </View>
-          <Text style={styles.guestTitle}>Welcome to ስራ</Text>
+          <Text style={styles.guestTitle}>{t('profile.welcomeTitle')}</Text>
           <Text style={styles.guestSubtitle}>
-            Sign in to build your profile, showcase your skills, track earnings, and coordinate with neighbors.
+            {t('profile.welcomeSub')}
           </Text>
           <TouchableOpacity
             style={styles.guestSignInBtn}
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.85}
           >
-            <Text style={styles.guestSignInBtnText}>Sign In / Register</Text>
+            <Text style={styles.guestSignInBtnText}>{t('profile.signInRegister')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -169,9 +173,25 @@ export const ProfileScreen = ({ navigation }: any) => {
             activeOpacity={0.7}
           >
             <Ionicons name="shield-checkmark-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
-            <Text style={styles.guestRulesBtnText}>Rules & Responsibilities</Text>
+            <Text style={styles.guestRulesBtnText}>{t('profile.rulesTitle')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.guestRulesBtn, { marginTop: 12, backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' }]}
+            onPress={() => setLangModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="globe-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
+            <Text style={styles.guestRulesBtnText}>
+              {language === 'am' ? 'ቋንቋ: አማርኛ' : 'Language: English'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        <LanguageSelectorModal
+          visible={langModalVisible}
+          onClose={() => setLangModalVisible(false)}
+        />
       </View>
     );
   }
@@ -267,8 +287,8 @@ export const ProfileScreen = ({ navigation }: any) => {
             <Ionicons name="briefcase" size={22} color="#FF6B3D" />
           </View>
           <View>
-            <Text style={styles.myGigsTitle}>My Gigs & Applications</Text>
-            <Text style={styles.myGigsSubtitle}>Jobs you posted and gigs you applied for</Text>
+            <Text style={styles.myGigsTitle}>{t('profile.myGigsTitle')}</Text>
+            <Text style={styles.myGigsSubtitle}>{t('profile.myGigsSub')}</Text>
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
@@ -276,12 +296,12 @@ export const ProfileScreen = ({ navigation }: any) => {
 
       {/* Account Info Card */}
       <View style={styles.accountCard}>
-        <Text style={styles.accountCardTitle}>Account Information</Text>
+        <Text style={styles.accountCardTitle}>{t('profile.accountInfo')}</Text>
 
         <View style={styles.accountRow}>
           <Ionicons name="mail-outline" size={18} color="#64748b" style={styles.accountIcon} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.accountLabel}>Email</Text>
+            <Text style={styles.accountLabel}>{t('auth.email')}</Text>
             <Text style={styles.accountValue}>{user?.email || 'N/A'}</Text>
           </View>
         </View>
@@ -291,11 +311,36 @@ export const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.accountRow}>
           <Ionicons name="calendar-outline" size={18} color="#64748b" style={styles.accountIcon} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.accountLabel}>Member Since</Text>
+            <Text style={styles.accountLabel}>{t('profile.memberSince')}</Text>
             <Text style={styles.accountValue}>{formatJoinDate(user?.created_at)}</Text>
           </View>
         </View>
       </View>
+
+      {/* Language Selector Card */}
+      <TouchableOpacity
+        style={styles.myGigsCard}
+        activeOpacity={0.8}
+        onPress={() => setLangModalVisible(true)}
+      >
+        <View style={styles.myGigsLeft}>
+          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#e8f3ef' }]}>
+            <Ionicons name="globe-outline" size={22} color="#103B31" />
+          </View>
+          <View>
+            <Text style={styles.myGigsTitle}>{t('profile.language')}</Text>
+            <Text style={styles.myGigsSubtitle}>
+              {language === 'am' ? 'አማርኛ (Amharic)' : 'English'}
+            </Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, color: '#103B31', fontWeight: '700', marginRight: 6 }}>
+            {language === 'am' ? 'አማ' : 'EN'}
+          </Text>
+          <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+        </View>
+      </TouchableOpacity>
 
       {/* Rules & Responsibilities Card */}
       <TouchableOpacity
@@ -308,8 +353,8 @@ export const ProfileScreen = ({ navigation }: any) => {
             <Ionicons name="shield-checkmark" size={22} color="#103B31" />
           </View>
           <View>
-            <Text style={styles.myGigsTitle}>Rules & Responsibilities</Text>
-            <Text style={styles.myGigsSubtitle}>Community safety and platform terms</Text>
+            <Text style={styles.myGigsTitle}>{t('profile.rulesTitle')}</Text>
+            <Text style={styles.myGigsSubtitle}>{t('profile.rulesSub')}</Text>
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
@@ -318,7 +363,7 @@ export const ProfileScreen = ({ navigation }: any) => {
       {/* Log Out Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={18} color="#dc2626" style={{ marginRight: 6 }} />
-        <Text style={styles.logoutButtonText}>Log Out</Text>
+        <Text style={styles.logoutButtonText}>{t('profile.logOut')}</Text>
       </TouchableOpacity>
 
       {/* Edit Profile Modal */}
@@ -487,6 +532,11 @@ export const ProfileScreen = ({ navigation }: any) => {
         onClose={closeModal}
         onVerificationSuccess={handleVerificationSuccess}
         navigation={navigation}
+      />
+
+      <LanguageSelectorModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
       />
     </ScrollView>
   );

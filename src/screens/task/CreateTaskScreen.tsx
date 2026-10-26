@@ -20,6 +20,7 @@ import {
 } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
+import { useTranslation } from '../../i18n';
 
 const CATEGORIES = ['Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tech Help', 'General'];
 
@@ -31,6 +32,7 @@ interface TaskFormErrors {
 }
 
 export const CreateTaskScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
@@ -156,10 +158,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       keyboardShouldPersistTaps="handled"
     >
       {/* Task Title */}
-      <Text style={styles.label}>Task Title</Text>
+      <Text style={styles.label}>{t('createTask.gigTitle')}</Text>
       <TextInput
         style={[styles.input, !!errors.title && styles.inputError]}
-        placeholder="e.g. Help assembling bookshelf & desk"
+        placeholder={t('createTask.gigTitlePlaceholder')}
         placeholderTextColor="#94a3b8"
         value={title}
         onChangeText={handleTitleChange}
@@ -174,7 +176,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       ) : null}
 
       {/* Category */}
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>{t('createTask.category')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
         {CATEGORIES.map((cat) => (
           <TouchableOpacity
@@ -184,7 +186,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
             activeOpacity={0.7}
           >
             <Text style={[styles.catText, category === cat && styles.activeCatText]}>
-              {cat}
+              {t(`categories.${cat}`)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -208,10 +210,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       </ScrollView>
 
       {/* Budget */}
-      <Text style={styles.label}>Budget Amount</Text>
+      <Text style={styles.label}>{t('createTask.budget')}</Text>
       <TextInput
         style={[styles.input, !!errors.budget && styles.inputError]}
-        placeholder="e.g. 50"
+        placeholder={t('createTask.budgetPlaceholder')}
         placeholderTextColor="#94a3b8"
         value={budget}
         onChangeText={handleBudgetChange}
@@ -227,10 +229,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       ) : null}
 
       {/* Location */}
-      <Text style={styles.label}>Location / Neighborhood</Text>
+      <Text style={styles.label}>{t('createTask.location')}</Text>
       <TextInput
         style={[styles.input, !!errors.location && styles.inputError]}
-        placeholder="e.g. Maple Street & 4th Ave"
+        placeholder={t('createTask.locationPlaceholder')}
         placeholderTextColor="#94a3b8"
         value={locationName}
         onChangeText={handleLocationChange}
@@ -245,10 +247,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       ) : null}
 
       {/* Description */}
-      <Text style={styles.label}>Description & Details</Text>
+      <Text style={styles.label}>{t('createTask.description')}</Text>
       <TextInput
         style={[styles.input, styles.textArea, !!errors.description && styles.inputError]}
-        placeholder="Describe what help you need, tools provided, estimated time..."
+        placeholder={t('createTask.descPlaceholder')}
         placeholderTextColor="#94a3b8"
         value={description}
         onChangeText={handleDescriptionChange}
@@ -274,7 +276,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         {isLoading || loadingLocation ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.submitButtonText}>Publish Task</Text>
+          <Text style={styles.submitButtonText}>{t('createTask.publishBtn')}</Text>
         )}
       </TouchableOpacity>
 

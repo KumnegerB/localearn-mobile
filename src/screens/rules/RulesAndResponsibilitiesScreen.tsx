@@ -11,75 +11,71 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SiraLogo } from '../../components/common/SiraLogo';
+import { useTranslation } from '../../i18n';
 
 interface RuleItem {
   id: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   badgeBg: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
 }
 
-const RULES: RuleItem[] = [
+const RULE_CONFIGS: RuleItem[] = [
   {
     id: 'payment',
     icon: 'wallet-outline',
     iconColor: '#103B31',
     badgeBg: '#e8f3ef',
-    title: 'Payment Responsibility',
-    description:
-      'ስራ is only a platform that connects people. We are not responsible if someone doesn’t pay you. Always agree on payment clearly before starting any task.',
+    titleKey: 'rules.rule1Title',
+    descKey: 'rules.rule1Desc',
   },
   {
     id: 'report',
     icon: 'alert-circle-outline',
     iconColor: '#dc2626',
     badgeBg: '#fee2e2',
-    title: 'Report Bad Behavior',
-    description:
-      'If someone doesn’t pay, behaves badly, or breaks the rules, please report them immediately. We will review and ban users who violate the rules.',
+    titleKey: 'rules.rule2Title',
+    descKey: 'rules.rule2Desc',
   },
   {
     id: 'respect',
     icon: 'heart-outline',
     iconColor: '#103B31',
     badgeBg: '#e8f3ef',
-    title: 'Be Honest & Respectful',
-    description:
-      'Always communicate clearly and treat others with respect.',
+    titleKey: 'rules.rule3Title',
+    descKey: 'rules.rule3Desc',
   },
   {
     id: 'illegal',
     icon: 'ban-outline',
     iconColor: '#ea580c',
     badgeBg: '#ffedd5',
-    title: 'No Illegal Tasks',
-    description:
-      'Do not post or accept any illegal, dangerous, or harmful tasks.',
+    titleKey: 'rules.rule4Title',
+    descKey: 'rules.rule4Desc',
   },
   {
     id: 'completion',
     icon: 'checkmark-done-circle-outline',
     iconColor: '#103B31',
     badgeBg: '#e8f3ef',
-    title: 'Complete What You Agree',
-    description:
-      'If you accept a task, try your best to complete it as agreed.',
+    titleKey: 'rules.rule5Title',
+    descKey: 'rules.rule5Desc',
   },
   {
     id: 'safety',
     icon: 'shield-checkmark-outline',
     iconColor: '#2563eb',
     badgeBg: '#dbeafe',
-    title: 'Stay Safe',
-    description:
-      'Meet in public places when possible and trust your instincts.',
+    titleKey: 'rules.rule6Title',
+    descKey: 'rules.rule6Desc',
   },
 ];
 
 export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
   const isFirstTime = route.params?.isFirstTime ?? false;
+  const { t, language } = useTranslation();
 
   const handleAgreeAndContinue = async () => {
     try {
@@ -133,28 +129,30 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
           <View style={styles.shieldIconContainer}>
             <Ionicons name="shield-checkmark" size={32} color="#103B31" />
           </View>
-          <Text style={styles.mainTitle}>Rules & Responsibilities</Text>
-          <Text style={styles.welcomeSubtitle}>Welcome to ስራ!</Text>
+          <Text style={styles.mainTitle}>{t('rules.title')}</Text>
+          <Text style={styles.welcomeSubtitle}>{t('rules.welcome')}</Text>
           <Text style={styles.leadText}>
-            Before you start, please read these important rules designed to keep our neighborhood community safe, fair, and trustworthy.
+            {t('rules.lead')}
           </Text>
         </View>
 
         {/* Rules Cards List */}
         <View style={styles.rulesList}>
-          {RULES.map((rule, index) => (
+          {RULE_CONFIGS.map((rule, index) => (
             <View key={rule.id} style={styles.ruleCard}>
               <View style={styles.cardHeader}>
                 <View style={[styles.iconBadge, { backgroundColor: rule.badgeBg }]}>
                   <Ionicons name={rule.icon} size={20} color={rule.iconColor} />
                 </View>
                 <View style={styles.ruleNumberBadge}>
-                  <Text style={styles.ruleNumberText}>Rule #{index + 1}</Text>
+                  <Text style={styles.ruleNumberText}>
+                    {language === 'am' ? 'ደንብ' : 'Rule'} #{index + 1}
+                  </Text>
                 </View>
               </View>
 
-              <Text style={styles.ruleTitle}>{rule.title}</Text>
-              <Text style={styles.ruleDescription}>{rule.description}</Text>
+              <Text style={styles.ruleTitle}>{t(rule.titleKey)}</Text>
+              <Text style={styles.ruleDescription}>{t(rule.descKey)}</Text>
             </View>
           ))}
         </View>
@@ -163,7 +161,7 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
         <View style={styles.agreementNotice}>
           <Ionicons name="information-circle-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
           <Text style={styles.agreementNoticeText}>
-            By continuing, you agree to follow these rules and uphold our community standards.
+            {t('rules.notice')}
           </Text>
         </View>
       </ScrollView>
@@ -177,7 +175,7 @@ export const RulesAndResponsibilitiesScreen = ({ navigation, route }: any) => {
             onPress={handleAgreeAndContinue}
           >
             <Text style={styles.primaryButtonText}>
-              {isFirstTime ? 'Agree & Continue' : 'I Understand'}
+              {isFirstTime ? t('rules.agreeContinue') : t('rules.understand')}
             </Text>
             <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
           </TouchableOpacity>

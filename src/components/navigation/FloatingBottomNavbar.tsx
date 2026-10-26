@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useChatStore } from '../../store/useChatStore';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../trust/TrustActionModal';
+import { useTranslation } from '../../i18n';
 
 interface TabItemProps {
   label: string;
@@ -69,6 +70,7 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
 }) => {
   const { width } = useWindowDimensions();
   const unreadCount = useChatStore((s) => s.unreadCount);
+  const { t } = useTranslation();
 
   const barMarginHorizontal = 18;
   const maxBarWidth = 440 - barMarginHorizontal * 2;
@@ -78,23 +80,23 @@ export const FloatingBottomNavbar: React.FC<BottomTabBarProps> = ({
     switch (routeName) {
       case 'Explore':
         return {
-          label: 'Home',
+          label: t('nav.home'),
           icon: (focused ? 'home' : 'home-outline') as keyof typeof Ionicons.glyphMap,
         };
       case 'Map':
         return {
-          label: 'Map',
+          label: t('nav.map'),
           icon: (focused ? 'location' : 'location-outline') as keyof typeof Ionicons.glyphMap,
         };
       case 'Inbox':
         return {
-          label: 'Inbox',
+          label: t('nav.inbox'),
           icon: (focused ? 'chatbubbles' : 'chatbubbles-outline') as keyof typeof Ionicons.glyphMap,
         };
       case 'Profile':
       default:
         return {
-          label: 'Profile',
+          label: t('nav.profile'),
           icon: (focused ? 'person' : 'person-outline') as keyof typeof Ionicons.glyphMap,
         };
     }

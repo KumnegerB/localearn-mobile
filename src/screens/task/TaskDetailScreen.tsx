@@ -16,9 +16,11 @@ import { formatPrice } from '../../utils/currency';
 import { Ionicons } from '@expo/vector-icons';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
+import { useTranslation } from '../../i18n';
 
 export const TaskDetailScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
+  const { t, language } = useTranslation();
   const {
     currentTask,
     fetchTaskById,
@@ -140,16 +142,24 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
         {/* Status & Category */}
         <View style={styles.metaRow}>
           <View style={styles.categoryPill}>
-            <Text style={styles.categoryText}>{currentTask.category}</Text>
+            <Text style={styles.categoryText}>{t(`categories.${currentTask.category}`)}</Text>
           </View>
           <View style={styles.statusPill}>
-            <Text style={styles.statusText}>{currentTask.status}</Text>
+            <Text style={styles.statusText}>
+              {currentTask.status === 'OPEN'
+                ? t('common.open')
+                : currentTask.status === 'ASSIGNED'
+                ? t('common.inProgress')
+                : currentTask.status === 'COMPLETED'
+                ? t('common.completed')
+                : currentTask.status}
+            </Text>
           </View>
           {currentTask.applications_count !== undefined && (
             <View style={styles.applicantPill}>
               <Ionicons name="people-outline" size={13} color="#103B31" style={{ marginRight: 4 }} />
               <Text style={styles.applicantPillText}>
-                {currentTask.applications_count} {currentTask.applications_count === 1 ? 'applicant' : 'applicants'}
+                {currentTask.applications_count} {t('common.peopleApplied')}
               </Text>
             </View>
           )}
@@ -163,19 +173,20 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
         {/* Location */}
         <Text style={styles.location}>
-          📍 {currentTask.location_name || 'Neighborhood area'}
+          📍 {currentTask.location_name || t('common.neighborhood')}
         </Text>
 
         <View style={styles.divider} />
 
         {/* Description */}
-        <Text style={styles.sectionHeader}>Task Description</Text>
+        <Text style={styles.sectionHeader}>{t('taskDetail.description')}</Text>
         <Text style={styles.description}>{currentTask.description}</Text>
 
         {/* Posted By (Only shown when viewer is NOT the creator) */}
         {!isCreator && currentTask.creator && (
           <>
             <View style={styles.divider} />
+            <Text style={styles.sectionHeader}>{t('taskDetail.postedBy')}</Text>
             <Text style={styles.sectionHeader}>Posted By</Text>
             <TouchableOpacity
               style={styles.userCard}
@@ -323,8 +334,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
               >
                 <Ionicons name="checkmark-circle" size={18} color="#15803d" style={{ marginRight: 6 }} />
                 <View style={styles.appliedTextCol}>
-                  <Text style={styles.appliedButtonText}>Applied</Text>
-                  <Text style={styles.appliedCancelHint}>Tap to withdraw</Text>
+                  <Text style={styles.appliedButtonText}>{t('common.applied')}</Text>
+                  <Text style={styles.appliedCancelHint}>{language === 'am' ? 'ለማቋረጥ ይጫኑ' : 'Tap to withdraw'}</Text>
                 </View>
               </TouchableOpacity>
             ) : (
@@ -334,7 +345,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
                 disabled={actionLoading}
               >
                 <Ionicons name="hand-right-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.actionButtonText}>Apply for Gig</Text>
+                <Text style={styles.actionButtonText}>{t('taskDetail.applyNow')}</Text>
               </TouchableOpacity>
             )
           )}
@@ -348,7 +359,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
               {actionLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.actionButtonText}>Mark Completed</Text>
+                <Text style={styles.actionButtonText}>{t('taskDetail.markComplete')}</Text>
               )}
             </TouchableOpacity>
           )}
@@ -360,7 +371,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Apply for this Gig</Text>
+              <Text style={styles.modalTitle}>{t('taskDetail.applyNow')}</Text>
               <TouchableOpacity onPress={() => setApplyModalVisible(false)}>
                 <Ionicons name="close" size={24} color="#64748b" />
               </TouchableOpacity>

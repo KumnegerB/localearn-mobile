@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { SiraLogo } from '../../components/common/SiraLogo';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useTranslation } from '../../i18n';
+import { LanguageSelectorModal } from '../../components/common/LanguageSelectorModal';
 
 export const LandingScreen = ({ navigation }: any) => {
   const { user } = useAuthStore();
+  const { t, language } = useTranslation();
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -24,6 +28,21 @@ export const LandingScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <View style={styles.container}>
+        {/* Top bar with Language Selector */}
+        <View style={styles.topBar}>
+          <View />
+          <TouchableOpacity
+            style={styles.langButton}
+            onPress={() => setLangModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="globe-outline" size={16} color="#103B31" style={{ marginRight: 5 }} />
+            <Text style={styles.langButtonText}>
+              {language === 'am' ? 'አማርኛ' : 'English'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Main Center Content: Logo & Text */}
         <View style={styles.centerContent}>
           {/* Brand Logo */}
@@ -34,10 +53,10 @@ export const LandingScreen = ({ navigation }: any) => {
           {/* Explanation Text */}
           <View style={styles.textContainer}>
             <Text style={styles.headline}>
-              Local tasks.{'\n'}Instant earnings.
+              {t('landing.headline')}
             </Text>
             <Text style={styles.subtitle}>
-              Find quick paid gigs in your neighborhood or hire trusted neighbors in minutes.
+              {t('landing.subtitle')}
             </Text>
           </View>
         </View>
@@ -49,7 +68,7 @@ export const LandingScreen = ({ navigation }: any) => {
             activeOpacity={0.85}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Text style={styles.primaryButtonText}>{t('landing.signIn')}</Text>
             <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
           </TouchableOpacity>
 
@@ -58,7 +77,7 @@ export const LandingScreen = ({ navigation }: any) => {
             activeOpacity={0.7}
             onPress={() => navigation.navigate('Register')}
           >
-            <Text style={styles.secondaryButtonText}>Create an Account</Text>
+            <Text style={styles.secondaryButtonText}>{t('landing.createAccount')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -66,15 +85,20 @@ export const LandingScreen = ({ navigation }: any) => {
             activeOpacity={0.7}
             onPress={() => navigation.replace('Main')}
           >
-            <Text style={styles.guestButtonText}>Continue as Guest</Text>
+            <Text style={styles.guestButtonText}>{t('landing.continueGuest')}</Text>
             <Ionicons name="arrow-forward" size={15} color="#64748b" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
-            By continuing, you agree to our Terms and Privacy Policy.
+            {t('landing.termsFooter')}
           </Text>
         </View>
       </View>
+
+      <LanguageSelectorModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -87,9 +111,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 28,
-    paddingTop: 40,
+    paddingTop: 16,
     paddingBottom: 28,
     justifyContent: 'space-between',
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  langButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3FAF6',
+    borderWidth: 1,
+    borderColor: '#CDE4D7',
+    borderRadius: 20,
+  },
+  langButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#103B31',
   },
   centerContent: {
     flex: 1,

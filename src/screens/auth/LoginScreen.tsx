@@ -16,8 +16,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
 import { validateEmail, validatePassword } from '../../utils/validators';
 import { SiraLogo } from '../../components/common/SiraLogo';
+import { useTranslation } from '../../i18n';
 
 export const LoginScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -106,9 +108,9 @@ export const LoginScreen = ({ navigation }: any) => {
 
           {/* Heading */}
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back 👋</Text>
+            <Text style={styles.title}>{t('auth.welcomeBack')}</Text>
             <Text style={styles.subtitle}>
-              Sign in to manage your gigs, track applicants, and chat with neighbors.
+              {t('auth.loginSubtitle')}
             </Text>
           </View>
 
@@ -123,7 +125,7 @@ export const LoginScreen = ({ navigation }: any) => {
           {/* Input Form */}
           <View style={styles.form}>
             {/* Email Field */}
-            <Text style={styles.inputLabel}>Email Address</Text>
+            <Text style={styles.inputLabel}>{t('auth.email')}</Text>
             <View style={[styles.inputBox, !!errors.email && styles.inputBoxError]}>
               <Ionicons
                 name="mail-outline"
@@ -133,7 +135,7 @@ export const LoginScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="name@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={email}
                 onChangeText={handleEmailChange}
@@ -152,7 +154,7 @@ export const LoginScreen = ({ navigation }: any) => {
             ) : null}
 
             {/* Password Field */}
-            <Text style={styles.inputLabel}>Password</Text>
+            <Text style={styles.inputLabel}>{t('auth.password')}</Text>
             <View style={[styles.inputBox, !!errors.password && styles.inputBoxError]}>
               <Ionicons
                 name="lock-closed-outline"
@@ -162,7 +164,7 @@ export const LoginScreen = ({ navigation }: any) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={password}
                 onChangeText={handlePasswordChange}
@@ -202,7 +204,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <>
-                  <Text style={styles.primaryButtonText}>Sign In</Text>
+                  <Text style={styles.primaryButtonText}>{t('landing.signIn')}</Text>
                   <Ionicons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
                 </>
               )}
@@ -211,9 +213,9 @@ export const LoginScreen = ({ navigation }: any) => {
 
           {/* Footer Switcher */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account yet? </Text>
+            <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')} activeOpacity={0.7}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
+              <Text style={styles.signUpLink}>{t('auth.signUp')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

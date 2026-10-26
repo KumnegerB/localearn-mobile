@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useTranslation } from '../../i18n';
 import { TaskCard } from '../../components/task/TaskCard';
 
 const CATEGORIES = ['All', 'Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tech Help', 'General'];
@@ -18,6 +19,7 @@ const CATEGORIES = ['All', 'Home & Yard', 'Moving', 'Delivery', 'Pet Care', 'Tec
 export const TaskListScreen = ({ navigation }: any) => {
   const { tasks, fetchTasks, isLoading } = useTaskStore();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -59,7 +61,7 @@ export const TaskListScreen = ({ navigation }: any) => {
                   selectedCategory === cat && styles.activeFilterText,
                 ]}
               >
-                {cat}
+                {t(`categories.${cat}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -87,8 +89,8 @@ export const TaskListScreen = ({ navigation }: any) => {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No gigs found nearby</Text>
-              <Text style={styles.emptySubtitle}>Be the first to post a task in your neighborhood!</Text>
+              <Text style={styles.emptyTitle}>{t('explore.noGigsFound')}</Text>
+              <Text style={styles.emptySubtitle}>{t('explore.noGigsSub')}</Text>
             </View>
           }
         />

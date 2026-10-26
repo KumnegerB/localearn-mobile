@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Task } from '../../types';
-
 import { formatPrice } from '../../utils/currency';
+import { useTranslation } from '../../i18n';
 
 interface TaskCardProps {
   task: Task;
@@ -11,6 +11,8 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress }) => {
+  const { t } = useTranslation();
+
   const getBadgeColor = (status: string) => {
     switch (status) {
       case 'OPEN':
@@ -24,15 +26,32 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress }) => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'OPEN':
+        return t('common.open');
+      case 'ASSIGNED':
+        return t('common.inProgress');
+      case 'COMPLETED':
+        return t('common.completed');
+      case 'CANCELLED':
+        return t('common.cancelled');
+      default:
+        return status;
+    }
+  };
+
+  const categoryLabel = t(`categories.${task.category}`);
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <View style={styles.categoryContainer}>
-          <Text style={styles.categoryText}>{task.category}</Text>
+          <Text style={styles.categoryText}>{categoryLabel}</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={[styles.badge, { backgroundColor: getBadgeColor(task.status) }]}>
-            <Text style={styles.badgeText}>{task.status}</Text>
+            <Text style={styles.badgeText}>{getStatusLabel(task.status)}</Text>
           </View>
           <View style={styles.applicantBadge}>
             <Ionicons name="person-outline" size={12} color="#103B31" style={{ marginRight: 3 }} />
@@ -49,7 +68,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onPress }) => {
       <View style={styles.footer}>
         <View style={styles.locationContainer}>
           <Text style={styles.locationText} numberOfLines={1}>
-            📍 {task.location_name || 'Nearby'}
+            📍 {task.location_name || t('common.neighborhood')}
             {task.distance_km !== undefined && task.distance_km !== null
               ? ` (${task.distance_km} km away)`
               : ''}
