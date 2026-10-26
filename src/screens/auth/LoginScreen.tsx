@@ -118,7 +118,19 @@ export const LoginScreen = ({ navigation }: any) => {
           {error ? (
             <View style={styles.errorBanner}>
               <Ionicons name="alert-circle" size={18} color="#dc2626" style={{ marginRight: 8 }} />
-              <Text style={styles.errorText}>{error}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.errorText}>{error}</Text>
+                {error.toLowerCase().includes('verify') && (
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('EmailVerification', { email: email.trim().toLowerCase() })}
+                    style={{ marginTop: 6 }}
+                  >
+                    <Text style={{ color: '#103B31', fontWeight: '700', fontSize: 13, textDecorationLine: 'underline' }}>
+                      Verify Email Now →
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           ) : null}
 

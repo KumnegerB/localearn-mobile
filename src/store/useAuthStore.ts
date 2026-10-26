@@ -48,15 +48,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     const cleanEmail = email.trim().toLowerCase();
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/register', {
+      await apiClient.post<AuthResponse>('/auth/register', {
         full_name: fullName.trim(),
         email: cleanEmail,
         password,
         phone_number: phoneNumber?.trim() || undefined,
       });
-      const { access_token, user } = response.data;
-      await AsyncStorage.setItem('@localearn_token', access_token);
-      set({ token: access_token, user, isLoading: false, error: null });
+      // Do not store token or set user as logged in yet.
+      // The user must first verify their email via OTP!
+      set({ isLoading: false, error: null });
       return true;
     } catch (err: any) {
       console.error('Registration failed:', err.response?.data || err.message || err);
@@ -138,11 +138,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const cleanEmail = email.trim().toLowerCase();
       const cleanCode = otpCode.replace(/\s+/g, '').trim();
       const response = await apiClient.post('/auth/verify-otp', { email: cleanEmail, otp_code: cleanCode });
-      const updatedUser = response.data?.user;
-      if (updatedUser) {
+      const { user: updatedUser, access_token } = response.data;
+      
+      // Store token and activate user session upon successful verification
+      if (access_token) {
+        await AsyncStorage.setItem('@localearn_token', access_token);
+        set({ token: access_token, user: updatedUser });
+      } else if (updatedUser) {
         set({ user: updatedUser });
-      } else if (get().user) {
-        set({ user: { ...get().user!, is_email_verified: true } });
       }
       return { success: true, message: response.data?.message || 'Email verified successfully.' };
     } catch (err: any) {
