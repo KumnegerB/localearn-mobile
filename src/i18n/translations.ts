@@ -160,6 +160,21 @@ export const translations = {
       typeMessage: 'Type a message...',
       send: 'Send',
     },
+    notifications: {
+      title: 'Notifications',
+      allCaughtUp: 'All caught up',
+      unreadCount: '{count} unread notifications',
+      oneUnread: '1 unread notification',
+      markAllAsRead: 'Mark all as read',
+      noNotifications: 'No notifications yet',
+      noNotificationsSub:
+        'When someone applies to your gigs or accepts your applications, you will see notifications here.',
+      justNow: 'Just now',
+      minutesAgo: '{count}m ago',
+      hoursAgo: '{count}h ago',
+      yesterday: 'Yesterday',
+      daysAgo: '{count}d ago',
+    },
     language: {
       selectLanguage: 'Choose Language / ቋንቋ ይምረጡ',
       english: 'English',
@@ -324,6 +339,21 @@ export const translations = {
       noMessagesSub: 'ከአሰሪዎች ወይም ከረዳቶች ጋር ሲወያዩ መልእክቶች እዚህ ይታያሉ።',
       typeMessage: 'መልእክት ይፃፉ...',
       send: 'ላክ',
+    },
+    notifications: {
+      title: 'ማሳወቂያዎች',
+      allCaughtUp: 'ምንም አዲስ ማሳወቂያ የለም',
+      unreadCount: '{count} ያልተነበቡ ማሳወቂያዎች',
+      oneUnread: '1 ያልተነበበ ማሳወቂያ',
+      markAllAsRead: 'ሁሉንም እንደተነበበ ምልክት አድርግ',
+      noNotifications: 'እስካሁን ምንም ማሳወቂያ የለም',
+      noNotificationsSub:
+        'ሰዎች ለስራዎችዎ ሲያመለክቱ ወይም ማመልከቻዎ ተቀባይነት ሲያገኝ ማሳወቂያዎች እዚህ ይታያሉ።',
+      justNow: 'አሁን',
+      minutesAgo: 'ከ {count} ደቂቃ በፊት',
+      hoursAgo: 'ከ {count} ሰዓት በፊት',
+      yesterday: 'ትናንት',
+      daysAgo: 'ከ {count} ቀን በፊት',
     },
     language: {
       selectLanguage: 'Choose Language / ቋንቋ ይምረጡ',

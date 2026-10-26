@@ -11,11 +11,13 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotificationStore } from '../../store/useNotificationStore';
+import { useTranslation } from '../../i18n';
 import { AppNotification } from '../../types';
 
 export const NotificationScreen = ({ navigation }: any) => {
   const { notifications, fetchNotifications, markAsRead, markAllAsRead, isLoading, unreadCount } =
     useNotificationStore();
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -40,11 +42,11 @@ export const NotificationScreen = ({ navigation }: any) => {
       const diffHours = Math.floor(diffMin / 60);
       const diffDays = Math.floor(diffHours / 24);
 
-      if (diffSec < 60) return 'Just now';
-      if (diffMin < 60) return `${diffMin}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays}d ago`;
+      if (diffSec < 60) return t('notifications.justNow');
+      if (diffMin < 60) return t('notifications.minutesAgo', { count: diffMin });
+      if (diffHours < 24) return t('notifications.hoursAgo', { count: diffHours });
+      if (diffDays === 1) return t('notifications.yesterday');
+      if (diffDays < 7) return t('notifications.daysAgo', { count: diffDays });
       return date.toLocaleDateString();
     } catch {
       return '';
@@ -96,11 +98,15 @@ export const NotificationScreen = ({ navigation }: any) => {
       {/* Top Action Header */}
       <View style={styles.headerBar}>
         <Text style={styles.headerSubtitle}>
-          {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up'}
+          {unreadCount > 0
+            ? unreadCount === 1
+              ? t('notifications.oneUnread')
+              : t('notifications.unreadCount', { count: unreadCount })
+            : t('notifications.allCaughtUp')}
         </Text>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={markAllAsRead} style={styles.markAllBtn}>
-            <Text style={styles.markAllText}>Mark all as read</Text>
+            <Text style={styles.markAllText}>{t('notifications.markAllAsRead')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -151,9 +157,9 @@ export const NotificationScreen = ({ navigation }: any) => {
                 <View style={styles.emptyIconBox}>
                   <Ionicons name="notifications-outline" size={48} color="#94a3b8" />
                 </View>
-                <Text style={styles.emptyTitle}>No notifications yet</Text>
+                <Text style={styles.emptyTitle}>{t('notifications.noNotifications')}</Text>
                 <Text style={styles.emptySubtitle}>
-                  When someone applies to your gigs or accepts your applications, you will see notifications here.
+                  {t('notifications.noNotificationsSub')}
                 </Text>
               </View>
             ) : null
