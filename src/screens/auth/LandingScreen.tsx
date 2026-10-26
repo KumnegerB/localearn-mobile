@@ -32,14 +32,12 @@ export const LandingScreen = ({ navigation }: any) => {
         <View style={styles.topBar}>
           <View />
           <TouchableOpacity
-            style={styles.langButton}
             onPress={() => setLangModalVisible(true)}
             activeOpacity={0.7}
+            style={{ padding: 6 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="globe-outline" size={16} color="#103B31" style={{ marginRight: 5 }} />
-            <Text style={styles.langButtonText}>
-              {language === 'am' ? 'አማርኛ' : 'English'}
-            </Text>
+            <Ionicons name="globe-outline" size={24} color="#103B31" />
           </TouchableOpacity>
         </View>
 

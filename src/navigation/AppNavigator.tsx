@@ -38,31 +38,18 @@ const Tab = createBottomTabNavigator();
 const HeaderRightActions = ({ navigation }: { navigation: any }) => {
   const [langModalVisible, setLangModalVisible] = useState(false);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
-  const { language } = useTranslation();
 
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-        {/* World / Globe language picker icon button */}
+        {/* World / Globe language picker icon button - plain, no card */}
         <TouchableOpacity
           onPress={() => setLangModalVisible(true)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 5,
-            paddingHorizontal: 8,
-            borderRadius: 16,
-            backgroundColor: '#F3FAF6',
-            borderWidth: 1,
-            borderColor: '#CDE4D7',
-            marginRight: 10,
-          }}
+          style={{ padding: 6, marginRight: 6 }}
           activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="globe-outline" size={17} color="#103B31" style={{ marginRight: 4 }} />
-          <Text style={{ fontSize: 12, fontWeight: '700', color: '#103B31' }}>
-            {language === 'am' ? 'አማ' : 'EN'}
-          </Text>
+          <Ionicons name="globe-outline" size={24} color="#103B31" />
         </TouchableOpacity>
 
         {/* Notifications Icon Button */}

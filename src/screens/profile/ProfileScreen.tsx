@@ -175,23 +175,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             <Ionicons name="shield-checkmark-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
             <Text style={styles.guestRulesBtnText}>{t('profile.rulesTitle')}</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.guestRulesBtn, { marginTop: 12, backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' }]}
-            onPress={() => setLangModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="globe-outline" size={16} color="#103B31" style={{ marginRight: 6 }} />
-            <Text style={styles.guestRulesBtnText}>
-              {language === 'am' ? 'ቋንቋ: አማርኛ' : 'Language: English'}
-            </Text>
-          </TouchableOpacity>
         </View>
-
-        <LanguageSelectorModal
-          visible={langModalVisible}
-          onClose={() => setLangModalVisible(false)}
-        />
       </View>
     );
   }

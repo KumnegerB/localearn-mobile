@@ -103,3 +103,4 @@ export const useTranslation = () => {
 
   return { t, language, setLanguage, isReady, isAmharic: language === 'am' };
 };
+
