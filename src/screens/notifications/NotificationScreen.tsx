@@ -82,9 +82,11 @@ export const NotificationScreen = ({ navigation }: any) => {
     }
 
     if (item.type === 'NEW_CANDIDATE' && item.task_id) {
+      const extracted = item.message.match(/'([^']+)'/);
+      const title = item.task_title || (extracted ? extracted[1] : undefined) || 'Gig Candidates';
       navigation.navigate('TaskCandidates', {
         taskId: item.task_id,
-        taskTitle: 'Candidates',
+        taskTitle: title,
       });
     } else if (item.task_id) {
       navigation.navigate('TaskDetail', {
@@ -121,13 +123,14 @@ export const NotificationScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id.toString()}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => {
             const iconConfig = getIconConfig(item.type);
 
             return (
               <TouchableOpacity
-                style={[styles.card, !item.is_read && styles.unreadCard]}
-                activeOpacity={0.7}
+                style={[styles.notificationRow, !item.is_read && styles.unreadRow]}
+                activeOpacity={0.65}
                 onPress={() => handleNotificationPress(item)}
               >
                 <View style={[styles.iconContainer, { backgroundColor: iconConfig.bg }]}>
@@ -181,8 +184,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
     backgroundColor: '#ffffff',
   },
   headerSubtitle: {
@@ -205,21 +208,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 12,
+    paddingBottom: 120,
   },
-  card: {
+  notificationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  unreadCard: {
-    backgroundColor: '#f2f7f5',
-    borderColor: '#cce3de',
+  unreadRow: {
+    backgroundColor: '#f6faf8',
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 72,
   },
   iconContainer: {
     width: 44,

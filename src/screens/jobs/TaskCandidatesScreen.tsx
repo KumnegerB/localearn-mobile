@@ -13,20 +13,30 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TaskCandidatesScreen = ({ route, navigation }: any) => {
-  const { taskId, taskTitle } = route.params;
-  const { candidates, fetchCandidates, acceptCandidate, isLoading } = useTaskStore();
+  const { taskId, taskTitle } = route.params || {};
+  const { candidates, fetchCandidates, acceptCandidate, fetchTaskById, currentTask, isLoading } = useTaskStore();
   const [actionId, setActionId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchCandidates(taskId);
-  }, [taskId]);
+    if (taskId) {
+      fetchCandidates(taskId);
+      if (!taskTitle || taskTitle.toLowerCase() === 'candidates') {
+        fetchTaskById(taskId);
+      }
+    }
+  }, [taskId, taskTitle]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchCandidates(taskId);
     setRefreshing(false);
   };
+
+  const resolvedTaskTitle =
+    taskTitle && taskTitle.toLowerCase() !== 'candidates'
+      ? taskTitle
+      : candidates[0]?.task?.title || currentTask?.title || 'Gig';
 
   const handleAcceptCandidate = (applicationId: number, applicantName: string) => {
     Alert.alert(
@@ -53,7 +63,7 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerSubtitle}>Candidates for:</Text>
-        <Text style={styles.headerTitle} numberOfLines={2}>{taskTitle}</Text>
+        <Text style={styles.headerTitle} numberOfLines={2}>{resolvedTaskTitle}</Text>
       </View>
 
       {isLoading && !refreshing && candidates.length === 0 ? (

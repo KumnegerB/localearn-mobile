@@ -106,6 +106,7 @@ export interface AppNotification {
   message: string;
   type: 'APPLICATION_ACCEPTED' | 'NEW_CANDIDATE' | string;
   task_id?: number | null;
+  task_title?: string | null;
   is_read: boolean;
   created_at: string;
 }
