@@ -15,6 +15,7 @@ interface ChatState {
   activeChatRoom: { taskId?: number | null; otherUserId: number } | null;
 
   setActiveChatRoom: (room: { taskId?: number | null; otherUserId: number } | null) => void;
+  clearMessages: () => void;
   dismissNotification: () => void;
   triggerNotification: (notif: InAppNotification) => void;
   markConversationAsRead: (taskId: number | undefined | null, otherUserId: number) => void;
@@ -38,6 +39,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setActiveChatRoom: (room) => {
     const currentNotif = get().activeNotification;
+    const currentRoom = get().activeChatRoom;
+    const isDifferentRoom = !currentRoom || (room && currentRoom.otherUserId !== room.otherUserId);
+
+    if (room && isDifferentRoom) {
+      set({ messages: [], isLoading: true });
+    }
+
     if (room && currentNotif?.otherUser?.id === room.otherUserId) {
       set({ activeChatRoom: room, activeNotification: null });
     } else {
@@ -46,6 +54,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (room) {
       get().markConversationAsRead(room.taskId, room.otherUserId);
     }
+  },
+
+  clearMessages: () => {
+    set({ messages: [], isLoading: false });
   },
 
   dismissNotification: () => {
@@ -158,7 +170,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchMessages: async (taskId: number | undefined | null, otherUserId: number) => {
-    set({ isLoading: true });
+    set({ isLoading: true, messages: [] });
     try {
       const safeTaskId = taskId ?? 0;
       const response = await apiClient.get<Message[]>(`/chat/task/${safeTaskId}/history`, {

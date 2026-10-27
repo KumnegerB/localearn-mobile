@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const {
     messages,
+    isLoading,
     fetchMessages,
     connectWebSocket,
     disconnectWebSocket,
@@ -28,6 +30,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
     setActiveChatRoom,
     fetchConversations,
     markConversationAsRead,
+    clearMessages,
   } = useChatStore();
   const { user, token } = useAuthStore();
   const flatListRef = useRef<FlatList>(null);
@@ -46,6 +49,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
       if (otherUser?.id) {
         markConversationAsRead(taskId, otherUser.id);
       }
+      clearMessages();
       setActiveChatRoom(null);
       if (user?.id) {
         setTimeout(() => {
@@ -153,54 +157,60 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         style={styles.container}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id.toString()}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          contentContainerStyle={styles.messageList}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyAvatar}>
-                <Text style={styles.emptyAvatarText}>{initials}</Text>
-              </View>
-              <Text style={styles.emptyTitle}>Chat with {otherUserName}</Text>
-              <Text style={styles.emptySubtitle}>
-                {taskTitle
-                  ? `Discuss details, timing, and requirements for "${taskTitle}".`
-                  : 'Send a message to get started!'}
-              </Text>
-            </View>
-          }
-          renderItem={({ item }) => {
-            const isMe = item.sender_id === user?.id;
-            return (
-              <View
-                style={[
-                  styles.bubbleWrapper,
-                  isMe ? styles.myBubbleWrapper : styles.otherBubbleWrapper,
-                ]}
-              >
-                {!isMe && (
-                  <Text style={styles.senderName}>{item.sender?.full_name || otherUserName}</Text>
-                )}
-                <View style={[styles.bubble, isMe ? styles.myBubble : styles.otherBubble]}>
-                  <Text
-                    style={[
-                      styles.messageText,
-                      isMe ? styles.myMessageText : styles.otherMessageText,
-                    ]}
-                  >
-                    {item.content}
-                  </Text>
-                  <Text style={[styles.timeText, isMe ? styles.myTimeText : styles.otherTimeText]}>
-                    {formatMessageTime(item.created_at)}
-                  </Text>
+        {isLoading && messages.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#103B31" />
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id.toString()}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            contentContainerStyle={styles.messageList}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <View style={styles.emptyAvatar}>
+                  <Text style={styles.emptyAvatarText}>{initials}</Text>
                 </View>
+                <Text style={styles.emptyTitle}>Chat with {otherUserName}</Text>
+                <Text style={styles.emptySubtitle}>
+                  {taskTitle
+                    ? `Discuss details, timing, and requirements for "${taskTitle}".`
+                    : 'Send a message to get started!'}
+                </Text>
               </View>
-            );
-          }}
-        />
+            }
+            renderItem={({ item }) => {
+              const isMe = item.sender_id === user?.id;
+              return (
+                <View
+                  style={[
+                    styles.bubbleWrapper,
+                    isMe ? styles.myBubbleWrapper : styles.otherBubbleWrapper,
+                  ]}
+                >
+                  {!isMe && (
+                    <Text style={styles.senderName}>{item.sender?.full_name || otherUserName}</Text>
+                  )}
+                  <View style={[styles.bubble, isMe ? styles.myBubble : styles.otherBubble]}>
+                    <Text
+                      style={[
+                        styles.messageText,
+                        isMe ? styles.myMessageText : styles.otherMessageText,
+                      ]}
+                    >
+                      {item.content}
+                    </Text>
+                    <Text style={[styles.timeText, isMe ? styles.myTimeText : styles.otherTimeText]}>
+                      {formatMessageTime(item.created_at)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            }}
+          />
+        )}
 
         <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TextInput
@@ -318,6 +328,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f8fafc',
   },
   messageList: {
