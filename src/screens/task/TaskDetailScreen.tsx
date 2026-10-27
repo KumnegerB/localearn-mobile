@@ -209,8 +209,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
                 <Text style={styles.userName}>{currentTask.creator?.full_name || 'Neighbor'}</Text>
                 <Text style={styles.userRating}>
                   {currentTask.creator?.rating_count && currentTask.creator.rating_count > 0
-                    ? `★ ${currentTask.creator.rating.toFixed(1)} (${currentTask.creator.rating_count} reviews)`
-                    : '0 reviews'}
+                    ? `★ ${currentTask.creator.rating.toFixed(1)} / 5 (${currentTask.creator.rating_count})`
+                    : 'Not rated'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
@@ -245,8 +245,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
                   <Text style={styles.userName}>{currentTask.helper?.full_name || 'Helper'}</Text>
                   <Text style={styles.userRating}>
                     {currentTask.helper?.rating_count && currentTask.helper.rating_count > 0
-                      ? `★ ${currentTask.helper.rating.toFixed(1)} (${currentTask.helper.rating_count} reviews)`
-                      : '★ New Helper'}
+                      ? `★ ${currentTask.helper.rating.toFixed(1)} / 5 (${currentTask.helper.rating_count})`
+                      : 'Not rated'}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#94a3b8" style={{ marginRight: 8 }} />

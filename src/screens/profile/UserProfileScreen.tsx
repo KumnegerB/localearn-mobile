@@ -12,12 +12,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../api/client';
-import { User } from '../../types';
+import { User, Review } from '../../types';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const UserProfileScreen = ({ route, navigation }: any) => {
   const { userId, user: initialUser, taskId, taskTitle } = route.params || {};
   const [profileUser, setProfileUser] = useState<User | null>(initialUser || null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(!initialUser);
   const insets = useSafeAreaInsets();
   const { user: currentUser } = useAuthStore();
@@ -35,8 +36,37 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
         .finally(() => {
           setIsLoading(false);
         });
+
+      apiClient
+        .get<Review[]>(`/reviews/user/${userId}`)
+        .then((res) => {
+          setReviews(res.data || []);
+        })
+        .catch((err) => {
+          console.log('Failed to fetch user reviews:', err);
+        });
     }
   }, [userId]);
+
+  // Dynamic rating calculation:
+  // If reviews array is loaded, calculate average and review count from real review data;
+  // otherwise fallback to profileUser properties from server.
+  const reviewCount =
+    reviews.length > 0
+      ? reviews.length
+      : profileUser?.rating_count && profileUser.rating_count > 0
+      ? profileUser.rating_count
+      : 0;
+
+  const rawRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+      : profileUser?.rating && profileUser.rating > 0
+      ? profileUser.rating
+      : 0;
+
+  const averageRating = Math.round(rawRating * 10) / 10;
+  const isRated = reviewCount > 0 && averageRating > 0;
 
   const initials = profileUser?.full_name
     ? profileUser.full_name
@@ -136,13 +166,19 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
 
             <Text style={styles.userName}>{profileUser?.full_name || 'Neighbor'}</Text>
 
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>
-                {profileUser?.rating_count && profileUser.rating_count > 0
-                  ? `★ ${profileUser.rating.toFixed(1)} (${profileUser.rating_count} reviews)`
-                  : '★ New Neighbor'}
-              </Text>
-            </View>
+            {isRated ? (
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={13} color="#b45309" style={{ marginRight: 4 }} />
+                <Text style={styles.ratingText}>
+                  {averageRating.toFixed(1)} / 5 ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.unratedBadge}>
+                <Ionicons name="star-outline" size={13} color="#64748b" style={{ marginRight: 4 }} />
+                <Text style={styles.unratedText}>Not rated</Text>
+              </View>
+            )}
 
             {/* Telegram-style Quick Action Buttons */}
             {!isMe && (
@@ -198,32 +234,45 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
             )}
           </View>
 
-          {/* Community Info Section */}
-          <View style={styles.infoCard}>
-            <Text style={styles.infoCardHeader}>Community Info</Text>
-
-            <View style={styles.detailRow}>
-              <Ionicons name="calendar-outline" size={18} color="#64748b" style={styles.detailIcon} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.detailLabel}>Member Since</Text>
-                <Text style={styles.detailValue}>{formatJoinDate(profileUser?.created_at)}</Text>
+          {/* Reviews List (if user has reviews) */}
+          {reviews.length > 0 && (
+            <View style={styles.infoCard}>
+              <View style={styles.reviewsHeaderRow}>
+                <Text style={styles.infoCardHeader}>Reviews ({reviewCount})</Text>
+                <View style={styles.reviewsScoreBadge}>
+                  <Ionicons name="star" size={12} color="#b45309" style={{ marginRight: 3 }} />
+                  <Text style={styles.reviewsScoreBadgeText}>{averageRating.toFixed(1)} / 5</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.detailDivider} />
-
-            <View style={styles.detailRow}>
-              <Ionicons name="star-outline" size={18} color="#64748b" style={styles.detailIcon} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.detailLabel}>Reliability & Reviews</Text>
-                <Text style={styles.detailValue}>
-                  {profileUser?.rating_count && profileUser.rating_count > 0
-                    ? `${profileUser.rating.toFixed(1)} Stars (${profileUser.rating_count} community reviews)`
-                    : '100% verified neighborhood profile'}
-                </Text>
-              </View>
+              {reviews.map((rev, index) => (
+                <View key={rev.id || index} style={[styles.reviewItem, index > 0 && styles.reviewItemBorder]}>
+                  <View style={styles.reviewItemTop}>
+                    <Text style={styles.reviewerName}>
+                      {rev.reviewer?.full_name || 'Neighbor'}
+                    </Text>
+                    <View style={styles.starRow}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons
+                          key={star}
+                          name={star <= Math.round(rev.rating) ? 'star' : 'star-outline'}
+                          size={12}
+                          color="#f59e0b"
+                          style={{ marginHorizontal: 1 }}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                  {rev.comment ? (
+                    <Text style={styles.reviewComment}>{rev.comment}</Text>
+                  ) : null}
+                  {rev.created_at ? (
+                    <Text style={styles.reviewDate}>{formatJoinDate(rev.created_at)}</Text>
+                  ) : null}
+                </View>
+              ))}
             </View>
-          </View>
+          )}
         </ScrollView>
       )}
     </View>
@@ -336,15 +385,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fef3c7',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 16,
     marginTop: 8,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fde68a',
   },
   ratingText: {
-    color: '#d97706',
+    color: '#b45309',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  unratedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  unratedText: {
+    color: '#64748b',
     fontWeight: '700',
     fontSize: 12,
   },
@@ -432,29 +502,59 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontStyle: 'italic',
   },
-  detailRow: {
+  reviewsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  reviewsScoreBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fde68a',
   },
-  detailIcon: {
-    marginRight: 12,
-  },
-  detailLabel: {
+  reviewsScoreBadgeText: {
+    color: '#b45309',
+    fontWeight: '800',
     fontSize: 11,
-    color: '#94a3b8',
-    fontWeight: '600',
   },
-  detailValue: {
+  reviewItem: {
+    paddingVertical: 10,
+  },
+  reviewItemBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#f1f5f9',
+  },
+  reviewItemTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reviewerName: {
     fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
-    marginTop: 1,
   },
-  detailDivider: {
-    height: 1,
-    backgroundColor: '#f1f5f9',
-    marginVertical: 10,
+  starRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reviewComment: {
+    fontSize: 13,
+    color: '#334155',
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 4,
   },
 });
 

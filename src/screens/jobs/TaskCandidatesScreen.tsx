@@ -108,8 +108,8 @@ export const TaskCandidatesScreen = ({ route, navigation }: any) => {
                       <Text style={styles.candidateName}>{applicant?.full_name || 'Applicant'}</Text>
                       <Text style={styles.candidateRating}>
                         {applicant?.rating_count && applicant.rating_count > 0
-                          ? `★ ${applicant.rating.toFixed(1)} (${applicant.rating_count} reviews)`
-                          : '0 reviews'}
+                          ? `★ ${applicant.rating.toFixed(1)} / 5 (${applicant.rating_count})`
+                          : 'Not rated'}
                       </Text>
                     </View>
                   </TouchableOpacity>
