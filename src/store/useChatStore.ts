@@ -24,6 +24,7 @@ interface ChatState {
   activeChatRoom: { taskId?: number | null; otherUserId: number } | null;
 
   loadCachedChatData: () => Promise<void>;
+  clearAllChatCache: () => Promise<void>;
   getRoomMessages: (taskId?: number | null, otherUserId?: number) => Message[];
   setActiveChatRoom: (room: { taskId?: number | null; otherUserId: number } | null) => void;
   clearMessages: () => void;
@@ -77,6 +78,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (e) {
       // Ignore cache load failure
     }
+  },
+
+  clearAllChatCache: async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(CHAT_CONVERSATIONS_KEY),
+        AsyncStorage.removeItem(CHAT_ROOMS_KEY),
+      ]);
+    } catch {
+      // Ignore errors
+    }
+    set({
+      conversations: [],
+      messages: [],
+      messagesByRoom: {},
+      unreadCount: 0,
+      activeChatRoom: null,
+      lastKnownMessageId: 0,
+      isLoading: false,
+      isMessagesLoading: false,
+    });
   },
 
   getRoomMessages: (taskId, otherUserId) => {

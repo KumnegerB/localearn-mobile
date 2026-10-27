@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { apiClient } from '../../api/client';
+import { invalidateUserProfileCache } from '../profile/UserProfileScreen';
 
 export const LeaveReviewScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
@@ -24,6 +25,8 @@ export const LeaveReviewScreen = ({ route, navigation }: any) => {
         rating,
         comment: comment.trim() || undefined,
       });
+      // Invalidate user profile caches so freshly calculated ratings are fetched on next view
+      invalidateUserProfileCache();
       Alert.alert('Review Submitted', 'Thank you for rating your experience!', [
         { text: 'Done', onPress: () => navigation.popToTop() },
       ]);

@@ -12,6 +12,7 @@ interface NotificationState {
   hasLoadedOnce: boolean;
 
   loadCachedNotifications: () => Promise<void>;
+  clearNotificationCache: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
   pollUnreadCount: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
@@ -41,6 +42,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     } catch {
       // Ignore cache load errors
     }
+  },
+
+  clearNotificationCache: async () => {
+    try {
+      await AsyncStorage.removeItem(NOTIFICATIONS_CACHE_KEY);
+    } catch {
+      // Ignore error
+    }
+    set({
+      notifications: [],
+      unreadCount: 0,
+      isLoading: false,
+      hasLoadedOnce: false,
+    });
   },
 
   fetchNotifications: async () => {

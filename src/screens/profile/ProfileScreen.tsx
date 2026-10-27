@@ -21,6 +21,7 @@ import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
 import { resetToLanding } from '../../navigation/navigationRef';
+import { invalidateUserProfileCache } from './UserProfileScreen';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -147,6 +148,7 @@ export const ProfileScreen = ({ navigation }: any) => {
     setIsSaving(false);
 
     if (success) {
+      if (user?.id) invalidateUserProfileCache(user.id);
       setIsEditing(false);
       Alert.alert('Profile Updated', 'Your profile details have been saved.');
     } else {

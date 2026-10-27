@@ -40,6 +40,7 @@ interface TaskState {
   error: string | null;
 
   loadCachedTaskData: () => Promise<void>;
+  clearUserTaskCache: () => Promise<void>;
   fetchTasks: (filters?: TaskFilter) => Promise<void>;
   fetchTaskById: (id: number) => Promise<void>;
   createTask: (taskData: Partial<Task>) => Promise<Task | null>;
@@ -277,19 +278,60 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
+  clearUserTaskCache: async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(TASKS_CACHE_KEY),
+        AsyncStorage.removeItem(MY_POSTED_CACHE_KEY),
+        AsyncStorage.removeItem(MY_APPLIED_CACHE_KEY),
+      ]);
+    } catch {
+      // Ignore cache clear error
+    }
+    set({
+      tasks: [],
+      tasksById: {},
+      myPostedTasks: [],
+      myAppliedTasks: [],
+      candidates: [],
+      receivedApplications: [],
+      currentTask: null,
+      notifiedAcceptedAppIds: new Set<number>(),
+      notifiedCandidateAppIds: new Set<number>(),
+      hasLoadedAppliedTasksOnce: false,
+      hasLoadedReceivedApplicationsOnce: false,
+      isLoading: false,
+      error: null,
+    });
+  },
+
   applyForTask: async (taskId: number, message?: string) => {
     try {
       const response = await apiClient.post<TaskApplication>(`/tasks/${taskId}/apply`, { message });
-      set((state) => ({
-        currentTask:
-          state.currentTask?.id === taskId
-            ? { ...state.currentTask, has_applied: true }
-            : state.currentTask,
-        myAppliedTasks: [
-          response.data,
+      const newApp = response.data;
+      set((state) => {
+        const updatedApplied = [
+          newApp,
           ...state.myAppliedTasks.filter((a) => a.task_id !== taskId),
-        ],
-      }));
+        ];
+        const updatedMap = { ...state.tasksById };
+        if (updatedMap[taskId]) {
+          updatedMap[taskId] = { ...updatedMap[taskId], has_applied: true };
+        }
+        const updatedTasks = state.tasks.map((t) =>
+          t.id === taskId ? { ...t, has_applied: true } : t
+        );
+        AsyncStorage.setItem(MY_APPLIED_CACHE_KEY, JSON.stringify(updatedApplied)).catch(() => {});
+        return {
+          currentTask:
+            state.currentTask?.id === taskId
+              ? { ...state.currentTask, has_applied: true }
+              : state.currentTask,
+          tasks: updatedTasks,
+          tasksById: updatedMap,
+          myAppliedTasks: updatedApplied,
+        };
+      });
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to apply for task' });
@@ -305,15 +347,28 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         await apiClient.delete(`/tasks/${taskId}/apply`);
       }
 
-      set((state) => ({
-        currentTask:
-          state.currentTask?.id === taskId
-            ? { ...state.currentTask, has_applied: false }
-            : state.currentTask,
-        myAppliedTasks: state.myAppliedTasks.filter(
+      set((state) => {
+        const updatedApplied = state.myAppliedTasks.filter(
           (a) => a.task_id !== taskId && (!applicationId || a.id !== applicationId)
-        ),
-      }));
+        );
+        const updatedMap = { ...state.tasksById };
+        if (updatedMap[taskId]) {
+          updatedMap[taskId] = { ...updatedMap[taskId], has_applied: false };
+        }
+        const updatedTasks = state.tasks.map((t) =>
+          t.id === taskId ? { ...t, has_applied: false } : t
+        );
+        AsyncStorage.setItem(MY_APPLIED_CACHE_KEY, JSON.stringify(updatedApplied)).catch(() => {});
+        return {
+          currentTask:
+            state.currentTask?.id === taskId
+              ? { ...state.currentTask, has_applied: false }
+              : state.currentTask,
+          tasks: updatedTasks,
+          tasksById: updatedMap,
+          myAppliedTasks: updatedApplied,
+        };
+      });
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to cancel application' });
@@ -324,15 +379,30 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   acceptCandidate: async (applicationId: number) => {
     try {
       const response = await apiClient.post<Task>(`/tasks/applications/${applicationId}/accept`);
-      set((state) => ({
-        currentTask: state.currentTask?.id === response.data.id ? response.data : state.currentTask,
-        myPostedTasks: state.myPostedTasks.map((t) => (t.id === response.data.id ? response.data : t)),
-        candidates: state.candidates.map((c) =>
+      const updatedTask = response.data;
+      set((state) => {
+        const updatedPosted = state.myPostedTasks.map((t) =>
+          t.id === updatedTask.id ? updatedTask : t
+        );
+        const updatedTasks = state.tasks.map((t) =>
+          t.id === updatedTask.id ? updatedTask : t
+        );
+        const updatedCandidates = state.candidates.map((c) =>
           c.id === applicationId
             ? { ...c, status: 'ACCEPTED' as const }
             : { ...c, status: 'REJECTED' as const }
-        ),
-      }));
+        );
+        const updatedMap = { ...state.tasksById, [updatedTask.id]: updatedTask };
+        AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(updatedPosted)).catch(() => {});
+        AsyncStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(updatedTasks.slice(0, 50))).catch(() => {});
+        return {
+          currentTask: state.currentTask?.id === updatedTask.id ? updatedTask : state.currentTask,
+          myPostedTasks: updatedPosted,
+          tasks: updatedTasks,
+          tasksById: updatedMap,
+          candidates: updatedCandidates,
+        };
+      });
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to accept candidate' });
@@ -377,11 +447,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.post<Task>('/tasks/', taskData);
-      set((state) => ({
-        myPostedTasks: [response.data, ...state.myPostedTasks],
-        isLoading: false,
-      }));
-      return response.data;
+      const createdTask = response.data;
+      set((state) => {
+        const newPosted = [createdTask, ...state.myPostedTasks];
+        const newTasks = [createdTask, ...state.tasks];
+        const newMap = { ...state.tasksById, [createdTask.id]: createdTask };
+        AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(newPosted)).catch(() => {});
+        AsyncStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks.slice(0, 50))).catch(() => {});
+        return {
+          tasks: newTasks,
+          myPostedTasks: newPosted,
+          tasksById: newMap,
+          isLoading: false,
+        };
+      });
+      return createdTask;
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Failed to create task',
@@ -394,10 +474,20 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   acceptTask: async (id: number) => {
     try {
       const response = await apiClient.post<Task>(`/tasks/${id}/accept`);
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? response.data : t)),
-        currentTask: state.currentTask?.id === id ? response.data : state.currentTask,
-      }));
+      const updated = response.data;
+      set((state) => {
+        const newTasks = state.tasks.map((t) => (t.id === id ? updated : t));
+        const newPosted = state.myPostedTasks.map((t) => (t.id === id ? updated : t));
+        const newMap = { ...state.tasksById, [id]: updated };
+        AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(newPosted)).catch(() => {});
+        AsyncStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks.slice(0, 50))).catch(() => {});
+        return {
+          tasks: newTasks,
+          myPostedTasks: newPosted,
+          tasksById: newMap,
+          currentTask: state.currentTask?.id === id ? updated : state.currentTask,
+        };
+      });
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to accept task' });
@@ -408,11 +498,20 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   completeTask: async (id: number) => {
     try {
       const response = await apiClient.post<Task>(`/tasks/${id}/complete`);
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? response.data : t)),
-        myPostedTasks: state.myPostedTasks.map((t) => (t.id === id ? response.data : t)),
-        currentTask: state.currentTask?.id === id ? response.data : state.currentTask,
-      }));
+      const updated = response.data;
+      set((state) => {
+        const newTasks = state.tasks.map((t) => (t.id === id ? updated : t));
+        const newPosted = state.myPostedTasks.map((t) => (t.id === id ? updated : t));
+        const newMap = { ...state.tasksById, [id]: updated };
+        AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(newPosted)).catch(() => {});
+        AsyncStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks.slice(0, 50))).catch(() => {});
+        return {
+          tasks: newTasks,
+          myPostedTasks: newPosted,
+          tasksById: newMap,
+          currentTask: state.currentTask?.id === id ? updated : state.currentTask,
+        };
+      });
       return true;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Failed to complete task' });

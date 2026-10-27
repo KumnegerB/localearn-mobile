@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { User, AuthResponse } from '../types';
+import { useChatStore } from './useChatStore';
+import { useTaskStore } from './useTaskStore';
+import { useNotificationStore } from './useNotificationStore';
+import { invalidateUserProfileCache } from '../screens/profile/UserProfileScreen';
 
 interface AuthState {
   user: User | null;
@@ -76,8 +80,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem('@localearn_token');
-    set({ user: null, token: null });
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem('@localearn_token'),
+        useChatStore.getState().clearAllChatCache(),
+        useTaskStore.getState().clearUserTaskCache(),
+        useNotificationStore.getState().clearNotificationCache(),
+      ]);
+      invalidateUserProfileCache();
+    } catch {
+      // Ignore errors
+    }
+    set({ user: null, token: null, isLoading: false, error: null });
   },
 
   checkAuth: async () => {
@@ -92,6 +106,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (error) {
       await AsyncStorage.removeItem('@localearn_token');
+      try {
+        await Promise.all([
+          useChatStore.getState().clearAllChatCache(),
+          useTaskStore.getState().clearUserTaskCache(),
+          useNotificationStore.getState().clearNotificationCache(),
+        ]);
+        invalidateUserProfileCache();
+      } catch {
+        // Ignore errors
+      }
       set({ user: null, token: null, isCheckingAuth: false });
     }
   },

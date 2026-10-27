@@ -22,10 +22,20 @@ interface CachedProfile {
 }
 
 const profileMemoryCache = new Map<number, CachedProfile>();
+const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+
+export const invalidateUserProfileCache = (userId?: number) => {
+  if (userId) {
+    profileMemoryCache.delete(userId);
+  } else {
+    profileMemoryCache.clear();
+  }
+};
 
 export const UserProfileScreen = ({ route, navigation }: any) => {
   const { userId, user: initialUser, taskId, taskTitle } = route.params || {};
   const cachedProfile = userId ? profileMemoryCache.get(userId) : null;
+  const isCacheValid = cachedProfile ? Date.now() - cachedProfile.timestamp < PROFILE_CACHE_TTL_MS : false;
 
   const [profileUser, setProfileUser] = useState<User | null>(
     initialUser || cachedProfile?.user || null
