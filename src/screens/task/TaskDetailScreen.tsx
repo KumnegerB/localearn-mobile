@@ -22,7 +22,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
   const { t, language } = useTranslation();
   const {
-    currentTask,
+    currentTask: storeCurrentTask,
     fetchTaskById,
     applyForTask,
     cancelApplication,
@@ -30,6 +30,8 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     isLoading,
     myAppliedTasks,
     fetchMyAppliedTasks,
+    tasksById,
+    tasks,
   } = useTaskStore();
   const { user } = useAuthStore();
   const [actionLoading, setActionLoading] = useState(false);
@@ -49,7 +51,13 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     fetchMyAppliedTasks();
   }, [taskId]);
 
-  if (isLoading || !currentTask) {
+  // Instant SWR: resolve from storeCurrentTask, route.params, or tasksById cache
+  const currentTask =
+    storeCurrentTask?.id === taskId
+      ? storeCurrentTask
+      : route.params?.task || tasksById[taskId] || tasks.find((t) => t.id === taskId) || null;
+
+  if (!currentTask) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#103B31" />

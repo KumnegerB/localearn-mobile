@@ -145,11 +145,11 @@ export const MyJobsScreen = ({ navigation }: any) => {
       </View>
 
       {/* Content */}
-      {isLoading && !refreshing && (
+      {isLoading && !refreshing && (activeTab === 'posted' ? myPostedTasks.length === 0 : myAppliedTasks.length === 0) ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#103B31" />
         </View>
-      )}
+      ) : null}
 
       {activeTab === 'posted' ? (
         <FlatList
@@ -164,7 +164,7 @@ export const MyJobsScreen = ({ navigation }: any) => {
               <View style={styles.postedItemWrapper}>
                 <TaskCard
                   task={item}
-                  onPress={() => navigation.navigate('TaskDetail', { taskId: item.id })}
+                  onPress={() => navigation.navigate('TaskDetail', { taskId: item.id, task: item })}
                 />
                 <View style={styles.postedActionRow}>
                   {isAssignedOrDone && item.helper ? (

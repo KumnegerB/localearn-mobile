@@ -3,12 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { AppNotification } from '../types';
 
+const NOTIFICATIONS_CACHE_KEY = '@localearn_cached_notifications';
+
 interface NotificationState {
   notifications: AppNotification[];
   unreadCount: number;
   isLoading: boolean;
   hasLoadedOnce: boolean;
 
+  loadCachedNotifications: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
   pollUnreadCount: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
@@ -21,6 +24,25 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   isLoading: false,
   hasLoadedOnce: false,
 
+  loadCachedNotifications: async () => {
+    try {
+      const raw = await AsyncStorage.getItem(NOTIFICATIONS_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0 && get().notifications.length === 0) {
+          const unread = parsed.filter((n: AppNotification) => !n.is_read).length;
+          set({
+            notifications: parsed,
+            unreadCount: unread,
+            hasLoadedOnce: true,
+          });
+        }
+      }
+    } catch {
+      // Ignore cache load errors
+    }
+  },
+
   fetchNotifications: async () => {
     const token = await AsyncStorage.getItem('@localearn_token');
     if (!token) {
@@ -28,7 +50,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       return;
     }
 
-    set({ isLoading: !get().hasLoadedOnce });
+    // Only show loading spinner if we have NO cached notifications
+    set({ isLoading: get().notifications.length === 0 });
     try {
       const response = await apiClient.get<AppNotification[]>('/notifications');
       const list = response.data;
@@ -39,6 +62,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         isLoading: false,
         hasLoadedOnce: true,
       });
+      AsyncStorage.setItem(NOTIFICATIONS_CACHE_KEY, JSON.stringify(list)).catch(() => {});
     } catch (err: any) {
       if (err.response?.status === 401) {
         set({ notifications: [], unreadCount: 0, isLoading: false });
@@ -90,4 +114,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 }));
+
+// Hydrate cached notifications upon launch
+useNotificationStore.getState().loadCachedNotifications();
 

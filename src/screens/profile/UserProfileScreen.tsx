@@ -15,35 +15,56 @@ import { apiClient } from '../../api/client';
 import { User, Review } from '../../types';
 import { useAuthStore } from '../../store/useAuthStore';
 
+interface CachedProfile {
+  user: User;
+  reviews: Review[];
+  timestamp: number;
+}
+
+const profileMemoryCache = new Map<number, CachedProfile>();
+
 export const UserProfileScreen = ({ route, navigation }: any) => {
   const { userId, user: initialUser, taskId, taskTitle } = route.params || {};
-  const [profileUser, setProfileUser] = useState<User | null>(initialUser || null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(!initialUser);
+  const cachedProfile = userId ? profileMemoryCache.get(userId) : null;
+
+  const [profileUser, setProfileUser] = useState<User | null>(
+    initialUser || cachedProfile?.user || null
+  );
+  const [reviews, setReviews] = useState<Review[]>(cachedProfile?.reviews || []);
+  const [isLoading, setIsLoading] = useState(!initialUser && !cachedProfile);
   const insets = useSafeAreaInsets();
   const { user: currentUser } = useAuthStore();
 
   useEffect(() => {
     if (userId) {
-      apiClient
-        .get<User>(`/users/${userId}`)
-        .then((res) => {
-          setProfileUser(res.data);
-        })
-        .catch((err) => {
-          console.error('Failed to fetch user profile:', err);
+      // Instant SWR: if cached, do not block UI with a spinner
+      if (initialUser || cachedProfile) {
+        setIsLoading(false);
+      }
+
+      Promise.all([
+        apiClient.get<User>(`/users/${userId}`).catch(() => null),
+        apiClient.get<Review[]>(`/reviews/user/${userId}`).catch(() => null),
+      ])
+        .then(([userRes, reviewsRes]) => {
+          const freshUser = userRes?.data;
+          const freshReviews = reviewsRes?.data || [];
+          if (freshUser) {
+            setProfileUser(freshUser);
+          }
+          if (freshReviews) {
+            setReviews(freshReviews);
+          }
+          if (freshUser) {
+            profileMemoryCache.set(userId, {
+              user: freshUser,
+              reviews: freshReviews,
+              timestamp: Date.now(),
+            });
+          }
         })
         .finally(() => {
           setIsLoading(false);
-        });
-
-      apiClient
-        .get<Review[]>(`/reviews/user/${userId}`)
-        .then((res) => {
-          setReviews(res.data || []);
-        })
-        .catch((err) => {
-          console.log('Failed to fetch user reviews:', err);
         });
     }
   }, [userId]);

@@ -80,7 +80,7 @@ export const TaskListScreen = ({ navigation }: any) => {
           renderItem={({ item }) => (
             <TaskCard
               task={item}
-              onPress={() => navigation.navigate('TaskDetail', { taskId: item.id })}
+              onPress={() => navigation.navigate('TaskDetail', { taskId: item.id, task: item })}
             />
           )}
           contentContainerStyle={styles.listContent}

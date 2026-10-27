@@ -4,6 +4,18 @@ import { apiClient } from '../api/client';
 import { Task, TaskStatus, TaskApplication } from '../types';
 import { useChatStore } from './useChatStore';
 
+const TASKS_CACHE_KEY = '@localearn_cached_tasks';
+const MY_POSTED_CACHE_KEY = '@localearn_cached_my_posted';
+const MY_APPLIED_CACHE_KEY = '@localearn_cached_my_applied';
+
+const updateTasksByIdMap = (newTasks: Task[], existing: Record<number, Task> = {}) => {
+  const map = { ...existing };
+  for (const t of newTasks) {
+    if (t?.id) map[t.id] = t;
+  }
+  return map;
+};
+
 interface TaskFilter {
   category?: string;
   status?: TaskStatus;
@@ -14,6 +26,7 @@ interface TaskFilter {
 
 interface TaskState {
   tasks: Task[];
+  tasksById: Record<number, Task>;
   myPostedTasks: Task[];
   myAppliedTasks: TaskApplication[];
   candidates: TaskApplication[];
@@ -25,6 +38,8 @@ interface TaskState {
   hasLoadedReceivedApplicationsOnce: boolean;
   isLoading: boolean;
   error: string | null;
+
+  loadCachedTaskData: () => Promise<void>;
   fetchTasks: (filters?: TaskFilter) => Promise<void>;
   fetchTaskById: (id: number) => Promise<void>;
   createTask: (taskData: Partial<Task>) => Promise<Task | null>;
@@ -41,6 +56,7 @@ interface TaskState {
 
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
+  tasksById: {},
   myPostedTasks: [],
   myAppliedTasks: [],
   candidates: [],
@@ -53,8 +69,51 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  loadCachedTaskData: async () => {
+    try {
+      const [tasksRaw, postedRaw, appliedRaw] = await Promise.all([
+        AsyncStorage.getItem(TASKS_CACHE_KEY),
+        AsyncStorage.getItem(MY_POSTED_CACHE_KEY),
+        AsyncStorage.getItem(MY_APPLIED_CACHE_KEY),
+      ]);
+
+      const updates: Partial<TaskState> = {};
+      let initialMap: Record<number, Task> = { ...get().tasksById };
+
+      if (tasksRaw) {
+        const parsed = JSON.parse(tasksRaw);
+        if (Array.isArray(parsed) && parsed.length > 0 && get().tasks.length === 0) {
+          updates.tasks = parsed;
+          initialMap = updateTasksByIdMap(parsed, initialMap);
+        }
+      }
+      if (postedRaw) {
+        const parsedPosted = JSON.parse(postedRaw);
+        if (Array.isArray(parsedPosted) && parsedPosted.length > 0 && get().myPostedTasks.length === 0) {
+          updates.myPostedTasks = parsedPosted;
+          initialMap = updateTasksByIdMap(parsedPosted, initialMap);
+        }
+      }
+      if (appliedRaw) {
+        const parsedApplied = JSON.parse(appliedRaw);
+        if (Array.isArray(parsedApplied) && parsedApplied.length > 0 && get().myAppliedTasks.length === 0) {
+          updates.myAppliedTasks = parsedApplied;
+        }
+      }
+
+      updates.tasksById = initialMap;
+      set(updates);
+    } catch {
+      // Ignore cache load failure
+    }
+  },
+
   fetchTasks: async (filters = {}) => {
-    set({ isLoading: true, error: null });
+    // Stale-While-Revalidate: only show spinner if cache is completely empty
+    const hasCached = get().tasks.length > 0;
+    if (!hasCached) {
+      set({ isLoading: true, error: null });
+    }
     try {
       const params: any = {};
       if (filters.category) params.category = filters.category;
@@ -66,7 +125,13 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }
 
       const response = await apiClient.get<Task[]>('/tasks/', { params });
-      set({ tasks: response.data, isLoading: false });
+      const newTasks = response.data;
+      set((state) => ({
+        tasks: newTasks,
+        tasksById: updateTasksByIdMap(newTasks, state.tasksById),
+        isLoading: false,
+      }));
+      AsyncStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks.slice(0, 50))).catch(() => {});
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Failed to load tasks',
@@ -82,10 +147,19 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return;
     }
 
-    set({ isLoading: true, error: null });
+    const hasCached = get().myPostedTasks.length > 0;
+    if (!hasCached) {
+      set({ isLoading: true, error: null });
+    }
     try {
       const response = await apiClient.get<Task[]>('/tasks/my-posted');
-      set({ myPostedTasks: response.data, isLoading: false });
+      const list = response.data;
+      set((state) => ({
+        myPostedTasks: list,
+        tasksById: updateTasksByIdMap(list, state.tasksById),
+        isLoading: false,
+      }));
+      AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(list)).catch(() => {});
     } catch (err: any) {
       if (err.response?.status === 401) {
         set({ myPostedTasks: [], isLoading: false });
@@ -100,6 +174,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     if (!token) {
       set({ myAppliedTasks: [], isLoading: false });
       return;
+    }
+
+    const hasCached = get().myAppliedTasks.length > 0;
+    if (!hasCached) {
+      set({ isLoading: true, error: null });
     }
 
     try {
@@ -262,15 +341,35 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   fetchTaskById: async (id: number) => {
-    set({ isLoading: true, error: null });
+    const state = get();
+    const cached =
+      state.tasksById[id] ||
+      state.tasks.find((t) => t.id === id) ||
+      state.myPostedTasks.find((t) => t.id === id) ||
+      (state.currentTask?.id === id ? state.currentTask : null);
+
+    if (cached) {
+      // Instant SWR: display cached task immediately with 0ms delay!
+      set({ currentTask: cached, isLoading: false, error: null });
+    } else {
+      set({ isLoading: true, error: null });
+    }
+
     try {
       const response = await apiClient.get<Task>(`/tasks/${id}`);
-      set({ currentTask: response.data, isLoading: false });
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || 'Failed to load task details',
+      const freshTask = response.data;
+      set((s) => ({
+        currentTask: freshTask,
+        tasksById: { ...s.tasksById, [id]: freshTask },
         isLoading: false,
-      });
+      }));
+    } catch (err: any) {
+      if (!cached) {
+        set({
+          error: err.response?.data?.detail || 'Failed to load task details',
+          isLoading: false,
+        });
+      }
     }
   },
 
@@ -321,4 +420,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 }));
+
+// Automatically hydrate cached tasks on boot
+useTaskStore.getState().loadCachedTaskData();
 

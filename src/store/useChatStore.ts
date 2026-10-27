@@ -1,11 +1,19 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { getWebSocketUrl } from '../config/env';
 import { Message, Conversation, InAppNotification } from '../types';
 
+const CHAT_CONVERSATIONS_KEY = '@localearn_cached_conversations';
+const CHAT_ROOMS_KEY = '@localearn_cached_chat_rooms';
+
+export const getRoomKey = (taskId?: number | null, otherUserId?: number): string =>
+  `${taskId || 0}_${otherUserId || 0}`;
+
 interface ChatState {
   conversations: Conversation[];
   messages: Message[];
+  messagesByRoom: Record<string, Message[]>;
   isLoading: boolean;
   isMessagesLoading: boolean;
   isConnected: boolean;
@@ -15,6 +23,8 @@ interface ChatState {
   lastKnownMessageId: number;
   activeChatRoom: { taskId?: number | null; otherUserId: number } | null;
 
+  loadCachedChatData: () => Promise<void>;
+  getRoomMessages: (taskId?: number | null, otherUserId?: number) => Message[];
   setActiveChatRoom: (room: { taskId?: number | null; otherUserId: number } | null) => void;
   clearMessages: () => void;
   dismissNotification: () => void;
@@ -30,6 +40,7 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   messages: [],
+  messagesByRoom: {},
   isLoading: false,
   isMessagesLoading: false,
   isConnected: false,
@@ -39,27 +50,61 @@ export const useChatStore = create<ChatState>((set, get) => ({
   lastKnownMessageId: 0,
   activeChatRoom: null,
 
+  loadCachedChatData: async () => {
+    try {
+      const [convsRaw, roomsRaw] = await Promise.all([
+        AsyncStorage.getItem(CHAT_CONVERSATIONS_KEY),
+        AsyncStorage.getItem(CHAT_ROOMS_KEY),
+      ]);
+
+      const updates: Partial<ChatState> = {};
+      if (convsRaw) {
+        const parsed = JSON.parse(convsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0 && get().conversations.length === 0) {
+          updates.conversations = parsed;
+          updates.unreadCount = parsed.reduce((sum: number, c: Conversation) => sum + (c.unread_count || 0), 0);
+        }
+      }
+      if (roomsRaw) {
+        const parsedRooms = JSON.parse(roomsRaw);
+        if (parsedRooms && typeof parsedRooms === 'object') {
+          updates.messagesByRoom = { ...parsedRooms, ...get().messagesByRoom };
+        }
+      }
+      if (Object.keys(updates).length > 0) {
+        set(updates);
+      }
+    } catch (e) {
+      // Ignore cache load failure
+    }
+  },
+
+  getRoomMessages: (taskId, otherUserId) => {
+    const key = getRoomKey(taskId, otherUserId);
+    return get().messagesByRoom[key] || [];
+  },
+
   setActiveChatRoom: (room) => {
     const currentNotif = get().activeNotification;
-    const currentRoom = get().activeChatRoom;
-    const isDifferentRoom = !currentRoom || (room && currentRoom.otherUserId !== room.otherUserId);
-
-    if (room && isDifferentRoom) {
-      set({ messages: [], isMessagesLoading: true });
-    }
-
-    if (room && currentNotif?.otherUser?.id === room.otherUserId) {
-      set({ activeChatRoom: room, activeNotification: null });
-    } else {
-      set({ activeChatRoom: room });
-    }
     if (room) {
+      const roomKey = getRoomKey(room.taskId, room.otherUserId);
+      const cached = get().messagesByRoom[roomKey] || [];
+      // Instantly hydrate messages from room cache with 0ms delay!
+      set({
+        activeChatRoom: room,
+        messages: cached,
+        isMessagesLoading: cached.length === 0,
+        activeNotification: currentNotif?.otherUser?.id === room.otherUserId ? null : currentNotif,
+      });
       get().markConversationAsRead(room.taskId, room.otherUserId);
+    } else {
+      set({ activeChatRoom: null });
     }
   },
 
   clearMessages: () => {
-    set({ messages: [], isMessagesLoading: false });
+    // Preserve messagesByRoom cache so reopening is instant!
+    set({ isMessagesLoading: false });
   },
 
   dismissNotification: () => {
@@ -162,6 +207,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         lastKnownMessageId: Math.max(state.lastKnownMessageId, maxMsgId),
         isLoading: false,
       });
+
+      // Persist conversations cache
+      AsyncStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(sanitizedConvs)).catch(() => {});
     } catch (err: any) {
       if (err.response?.status === 401) {
         set({ conversations: [], unreadCount: 0, isLoading: false });
@@ -172,13 +220,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchMessages: async (taskId: number | undefined | null, otherUserId: number) => {
-    set({ isMessagesLoading: true, messages: [] });
+    const roomKey = getRoomKey(taskId, otherUserId);
+    const existing = get().messagesByRoom[roomKey] || [];
+
+    // If we have cached messages for this room, keep showing them! Only show spinner if 0 messages.
+    if (existing.length === 0) {
+      set({ isMessagesLoading: true });
+    } else {
+      set({ messages: existing, isMessagesLoading: false });
+    }
+
     try {
       const safeTaskId = taskId ?? 0;
       const response = await apiClient.get<Message[]>(`/chat/task/${safeTaskId}/history`, {
         params: { other_user_id: otherUserId },
       });
-      set({ messages: response.data, isMessagesLoading: false });
+      const freshMessages = response.data;
+      set((state) => {
+        const updatedRooms = {
+          ...state.messagesByRoom,
+          [roomKey]: freshMessages,
+        };
+        // Persist room cache asynchronously
+        AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(updatedRooms)).catch(() => {});
+        return {
+          messages: freshMessages,
+          messagesByRoom: updatedRooms,
+          isMessagesLoading: false,
+        };
+      });
       // Mark as read in local conversation state
       get().markConversationAsRead(safeTaskId, otherUserId);
     } catch (err) {
@@ -207,6 +277,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const newMsg: Message = JSON.parse(event.data);
         const state = get();
         const isInThisRoom = state.activeChatRoom?.otherUserId === newMsg.sender_id;
+        const roomKey = getRoomKey(newMsg.task_id, isInThisRoom ? newMsg.sender_id : newMsg.receiver_id || otherUserId);
+        const currentRoomMsgs = state.messagesByRoom[roomKey] || [];
 
         if (isInThisRoom) {
           newMsg.is_read = true;
@@ -214,10 +286,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
           get().markConversationAsRead(newMsg.task_id, newMsg.sender_id);
         }
 
+        const updatedRoomMsgs = [...currentRoomMsgs, newMsg];
         set((s) => ({
-          messages: [...s.messages, newMsg],
+          messages: isInThisRoom ? [...s.messages, newMsg] : s.messages,
+          messagesByRoom: {
+            ...s.messagesByRoom,
+            [roomKey]: updatedRoomMsgs,
+          },
           lastKnownMessageId: Math.max(s.lastKnownMessageId, newMsg.id),
         }));
+
+        AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(get().messagesByRoom)).catch(() => {});
       } catch (e) {
         console.error('Failed to parse incoming WebSocket message', e);
       }
@@ -259,13 +338,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
           task_id: fallback.taskId ?? 0,
         });
         const newMsg = response.data;
-        set((state) => ({
-          messages: [...state.messages, newMsg],
-          lastKnownMessageId: Math.max(state.lastKnownMessageId, newMsg.id),
-        }));
+        const roomKey = getRoomKey(fallback.taskId, fallback.receiverId);
+        set((state) => {
+          const currentRoomMsgs = state.messagesByRoom[roomKey] || [];
+          const updatedRooms = {
+            ...state.messagesByRoom,
+            [roomKey]: [...currentRoomMsgs, newMsg],
+          };
+          AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(updatedRooms)).catch(() => {});
+          return {
+            messages: [...state.messages, newMsg],
+            messagesByRoom: updatedRooms,
+            lastKnownMessageId: Math.max(state.lastKnownMessageId, newMsg.id),
+          };
+        });
       } catch (e) {
         console.error('Failed to send message via REST fallback', e);
       }
     }
   },
 }));
+
+// Automatically hydrate cached chat conversations and rooms upon launch
+useChatStore.getState().loadCachedChatData();

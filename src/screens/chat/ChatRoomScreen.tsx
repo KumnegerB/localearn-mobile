@@ -38,7 +38,9 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     let isMounted = true;
     if (otherUser?.id) {
-      setLoadingMessages(true);
+      const initialCached = useChatStore.getState().getRoomMessages(taskId, otherUser.id);
+      // Instant SWR: if cached messages exist, display immediately with 0ms delay!
+      setLoadingMessages(initialCached.length === 0);
       setActiveChatRoom({ taskId, otherUserId: otherUser.id });
       fetchMessages(taskId, otherUser.id).finally(() => {
         if (isMounted) {
