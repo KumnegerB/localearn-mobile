@@ -238,7 +238,7 @@ export const ChooseUsernameScreen: React.FC<ChooseUsernameScreenProps> = ({
             </View>
 
             {/* Status Message Banner */}
-            {statusMessage && (
+            {Boolean(statusMessage) ? (
               <View
                 style={[
                   styles.statusBanner,
@@ -274,7 +274,7 @@ export const ChooseUsernameScreen: React.FC<ChooseUsernameScreenProps> = ({
                   {statusMessage}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* Guidelines Box */}

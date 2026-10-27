@@ -234,11 +234,11 @@ export const InboxScreen = ({ navigation }: any) => {
             <Text style={styles.userName} numberOfLines={1}>
               {item.other_user.full_name}
             </Text>
-            {item.other_user.username && (
+            {Boolean(item.other_user.username) ? (
               <Text style={styles.userHandleText} numberOfLines={1}>
                 @{item.other_user.username}
               </Text>
-            )}
+            ) : null}
           </View>
           <Text style={[styles.timeText, item.unread_count > 0 && styles.unreadTimeText]}>
             {formatTime(item.last_message.created_at)}
@@ -355,11 +355,11 @@ export const InboxScreen = ({ navigation }: any) => {
                           <Text style={styles.userName} numberOfLines={1}>
                             {u.full_name}
                           </Text>
-                          {u.username && (
+                          {Boolean(u.username) ? (
                             <Text style={styles.userHandleText} numberOfLines={1}>
                               @{u.username}
                             </Text>
-                          )}
+                          ) : null}
                         </View>
                       </View>
 

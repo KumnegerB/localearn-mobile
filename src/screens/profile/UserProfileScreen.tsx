@@ -181,9 +181,9 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
             )}
 
             {/* Telegram-style Quick Action Buttons */}
-            {!isMe && (
+            {!isMe && (Boolean(taskId) || Boolean(profileUser?.phone_number && profileUser.phone_number.trim())) ? (
               <View style={styles.actionRow}>
-                {taskId && (
+                {Boolean(taskId) ? (
                   <TouchableOpacity
                     style={styles.actionBtnPrimary}
                     onPress={handleMessageUser}
@@ -192,9 +192,9 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
                     <Ionicons name="chatbubbles" size={18} color="#ffffff" style={{ marginRight: 6 }} />
                     <Text style={styles.actionBtnPrimaryText}>Send Message</Text>
                   </TouchableOpacity>
-                )}
+                ) : null}
 
-                {profileUser?.phone_number && (
+                {Boolean(profileUser?.phone_number && profileUser.phone_number.trim()) ? (
                   <TouchableOpacity
                     style={styles.actionBtnSecondary}
                     onPress={handleCallUser}
@@ -203,9 +203,9 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
                     <Ionicons name="call" size={17} color="#103B31" style={{ marginRight: 6 }} />
                     <Text style={styles.actionBtnSecondaryText}>Call</Text>
                   </TouchableOpacity>
-                )}
+                ) : null}
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* About / Bio Section */}
@@ -235,7 +235,7 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
           </View>
 
           {/* Reviews List (if user has reviews) */}
-          {reviews.length > 0 && (
+          {reviews && reviews.length > 0 ? (
             <View style={styles.infoCard}>
               <View style={styles.reviewsHeaderRow}>
                 <Text style={styles.infoCardHeader}>Reviews ({reviewCount})</Text>
@@ -246,7 +246,7 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
               </View>
 
               {reviews.map((rev, index) => (
-                <View key={rev.id || index} style={[styles.reviewItem, index > 0 && styles.reviewItemBorder]}>
+                <View key={rev.id || index} style={[styles.reviewItem, index > 0 ? styles.reviewItemBorder : null]}>
                   <View style={styles.reviewItemTop}>
                     <Text style={styles.reviewerName}>
                       {rev.reviewer?.full_name || 'Neighbor'}
@@ -263,8 +263,8 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
                       ))}
                     </View>
                   </View>
-                  {rev.comment ? (
-                    <Text style={styles.reviewComment}>{rev.comment}</Text>
+                  {rev.comment && rev.comment.trim() ? (
+                    <Text style={styles.reviewComment}>{rev.comment.trim()}</Text>
                   ) : null}
                   {rev.created_at ? (
                     <Text style={styles.reviewDate}>{formatJoinDate(rev.created_at)}</Text>
@@ -272,7 +272,7 @@ export const UserProfileScreen = ({ route, navigation }: any) => {
                 </View>
               ))}
             </View>
-          )}
+          ) : null}
         </ScrollView>
       )}
     </View>
