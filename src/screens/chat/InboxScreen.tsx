@@ -9,13 +9,14 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useChatStore } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../api/client';
-import { User } from '../../types';
+import { User, Conversation } from '../../types';
 
 export const InboxScreen = ({ navigation }: any) => {
   const { conversations, fetchConversations, isLoading, markConversationAsRead } = useChatStore();
@@ -44,11 +45,43 @@ export const InboxScreen = ({ navigation }: any) => {
     }
   };
 
+  const getInitials = (fullName?: string) => {
+    if (!fullName) return 'U';
+    return fullName
+      .trim()
+      .split(/\s+/)
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
   const formatTime = (isoString?: string) => {
     if (!isoString) return '';
     try {
       const date = new Date(isoString);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const now = new Date();
+      const isToday =
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+      if (isToday) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+      const isYesterday =
+        date.getDate() === yesterday.getDate() &&
+        date.getMonth() === yesterday.getMonth() &&
+        date.getFullYear() === yesterday.getFullYear();
+
+      if (isYesterday) {
+        return 'Yesterday';
+      }
+
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     } catch {
       return '';
     }
@@ -169,6 +202,80 @@ export const InboxScreen = ({ navigation }: any) => {
 
   const isSearching = searchQuery.trim().length > 0;
 
+  const renderConversationItem = (item: Conversation) => (
+    <TouchableOpacity
+      key={`conv-${item.other_user.id}`}
+      style={styles.conversationRow}
+      activeOpacity={0.65}
+      onPress={() => {
+        markConversationAsRead(item.task_id, item.other_user.id);
+        navigation.navigate('ChatRoom', {
+          taskId: item.task_id,
+          taskTitle: item.task_title,
+          otherUser: item.other_user,
+        });
+      }}
+    >
+      <View style={styles.avatarWrapper}>
+        {item.other_user.avatar_url ? (
+          <Image source={{ uri: item.other_user.avatar_url }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {getInitials(item.other_user.full_name)}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.contentCol}>
+        <View style={styles.rowTop}>
+          <View style={styles.nameRow}>
+            <Text style={styles.userName} numberOfLines={1}>
+              {item.other_user.full_name}
+            </Text>
+            {item.other_user.username && (
+              <Text style={styles.userHandleText} numberOfLines={1}>
+                @{item.other_user.username}
+              </Text>
+            )}
+          </View>
+          <Text style={[styles.timeText, item.unread_count > 0 && styles.unreadTimeText]}>
+            {formatTime(item.last_message.created_at)}
+          </Text>
+        </View>
+
+        {item.task_title && item.task_title !== 'Direct Message' ? (
+          <View style={styles.taskTagRow}>
+            <Ionicons name="briefcase-outline" size={11} color="#103B31" style={{ marginRight: 3 }} />
+            <Text style={styles.taskTitleTag} numberOfLines={1}>
+              {item.task_title}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={styles.rowBottom}>
+          <Text
+            style={[
+              styles.lastMessageText,
+              item.unread_count > 0 && styles.unreadLastMessageText,
+            ]}
+            numberOfLines={1}
+          >
+            {item.last_message.content}
+          </Text>
+          {item.unread_count > 0 ? (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>
+                {item.unread_count > 99 ? '99+' : item.unread_count}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       {/* Search Header Bar */}
@@ -198,7 +305,7 @@ export const InboxScreen = ({ navigation }: any) => {
 
       {/* Main Content Area */}
       {isSearching ? (
-        /* SEARCH MODE */
+        /* SEARCH MODE - Telegram Flat Style */
         <ScrollView
           contentContainerStyle={styles.searchScrollContent}
           keyboardShouldPersistTaps="handled"
@@ -209,68 +316,11 @@ export const InboxScreen = ({ navigation }: any) => {
               <Text style={styles.sectionTitle}>
                 CONVERSATIONS ({filteredConversations.length})
               </Text>
-              {filteredConversations.map((item) => (
-                <TouchableOpacity
-                  key={`conv-${item.other_user.id}`}
-                  style={styles.conversationCard}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    markConversationAsRead(item.task_id, item.other_user.id);
-                    navigation.navigate('ChatRoom', {
-                      taskId: item.task_id,
-                      taskTitle: item.task_title,
-                      otherUser: item.other_user,
-                    });
-                  }}
-                >
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {item.other_user.full_name?.charAt(0) || 'U'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.contentCol}>
-                    <View style={styles.rowTop}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                        <Text style={styles.userName} numberOfLines={1}>
-                          {item.other_user.full_name}
-                        </Text>
-                        {item.other_user.username && (
-                          <Text style={styles.userHandleText} numberOfLines={1}>
-                            @{item.other_user.username}
-                          </Text>
-                        )}
-                      </View>
-                      <Text style={styles.timeText}>
-                        {formatTime(item.last_message.created_at)}
-                      </Text>
-                    </View>
-
-                    <View style={styles.taskTagRow}>
-                      <Ionicons name="briefcase-outline" size={12} color="#103B31" style={{ marginRight: 4 }} />
-                      <Text style={styles.taskTitleTag} numberOfLines={1}>
-                        {item.task_title}
-                      </Text>
-                    </View>
-
-                    <View style={styles.rowBottom}>
-                      <Text
-                        style={[
-                          styles.lastMessageText,
-                          item.unread_count > 0 && styles.unreadLastMessageText,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {item.last_message.content}
-                      </Text>
-                      {item.unread_count > 0 && (
-                        <View style={styles.unreadBadge}>
-                          <Text style={styles.unreadBadgeText}>{item.unread_count}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
+              {filteredConversations.map((item, idx) => (
+                <React.Fragment key={`search-conv-${item.other_user.id}`}>
+                  {idx > 0 && <View style={styles.separator} />}
+                  {renderConversationItem(item)}
+                </React.Fragment>
               ))}
             </View>
           )}
@@ -281,39 +331,50 @@ export const InboxScreen = ({ navigation }: any) => {
               <Text style={styles.sectionTitle}>
                 USERS ON SIRA ({distinctUserResults.length})
               </Text>
-              {distinctUserResults.map((u) => (
-                <TouchableOpacity
-                  key={`user-${u.id}`}
-                  style={styles.userResultCard}
-                  activeOpacity={0.7}
-                  onPress={() => handleOpenUserChat(u)}
-                >
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {u.full_name?.charAt(0) || 'U'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.contentCol}>
-                    <Text style={styles.userName} numberOfLines={1}>
-                      {u.full_name}
-                    </Text>
-                    {u.username ? (
-                      <Text style={styles.userHandleText}>@{u.username}</Text>
-                    ) : (
-                      <Text style={styles.userSubtitle}>Member</Text>
-                    )}
-                  </View>
-
+              {distinctUserResults.map((u, idx) => (
+                <React.Fragment key={`user-${u.id}`}>
+                  {idx > 0 && <View style={styles.separator} />}
                   <TouchableOpacity
-                    style={styles.messageUserBtn}
+                    style={styles.conversationRow}
+                    activeOpacity={0.65}
                     onPress={() => handleOpenUserChat(u)}
-                    activeOpacity={0.8}
                   >
-                    <Ionicons name="chatbubble-ellipses-outline" size={15} color="#ffffff" style={{ marginRight: 4 }} />
-                    <Text style={styles.messageUserBtnText}>Message</Text>
+                    <View style={styles.avatarWrapper}>
+                      {u.avatar_url ? (
+                        <Image source={{ uri: u.avatar_url }} style={styles.avatarImage} />
+                      ) : (
+                        <View style={styles.avatar}>
+                          <Text style={styles.avatarText}>{getInitials(u.full_name)}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.contentCol}>
+                      <View style={styles.rowTop}>
+                        <View style={styles.nameRow}>
+                          <Text style={styles.userName} numberOfLines={1}>
+                            {u.full_name}
+                          </Text>
+                          {u.username && (
+                            <Text style={styles.userHandleText} numberOfLines={1}>
+                              @{u.username}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      <View style={styles.rowBottom}>
+                        <Text style={styles.lastMessageText} numberOfLines={1}>
+                          {u.bio || u.skills || 'Tap to message'}
+                        </Text>
+                        <View style={styles.messageUserPill}>
+                          <Ionicons name="chatbubble-ellipses-outline" size={13} color="#103B31" style={{ marginRight: 3 }} />
+                          <Text style={styles.messageUserPillText}>Chat</Text>
+                        </View>
+                      </View>
+                    </View>
                   </TouchableOpacity>
-                </TouchableOpacity>
+                </React.Fragment>
               ))}
             </View>
           )}
@@ -339,7 +400,7 @@ export const InboxScreen = ({ navigation }: any) => {
           )}
         </ScrollView>
       ) : (
-        /* NORMAL CONVERSATIONS LIST */
+        /* NORMAL CONVERSATIONS LIST - Telegram Flat Style (No gap, edge-to-edge) */
         isLoading && !refreshing && uniqueConversations.length === 0 ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color="#103B31" />
@@ -350,68 +411,8 @@ export const InboxScreen = ({ navigation }: any) => {
             keyExtractor={(item) => item.other_user.id.toString()}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.conversationCard}
-                activeOpacity={0.7}
-                onPress={() => {
-                  markConversationAsRead(item.task_id, item.other_user.id);
-                  navigation.navigate('ChatRoom', {
-                    taskId: item.task_id,
-                    taskTitle: item.task_title,
-                    otherUser: item.other_user,
-                  });
-                }}
-              >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {item.other_user.full_name?.charAt(0) || 'U'}
-                  </Text>
-                </View>
-
-                <View style={styles.contentCol}>
-                  <View style={styles.rowTop}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                      <Text style={styles.userName} numberOfLines={1}>
-                        {item.other_user.full_name}
-                      </Text>
-                      {item.other_user.username && (
-                        <Text style={styles.userHandleText} numberOfLines={1}>
-                          @{item.other_user.username}
-                        </Text>
-                      )}
-                    </View>
-                    <Text style={styles.timeText}>
-                      {formatTime(item.last_message.created_at)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.taskTagRow}>
-                    <Ionicons name="briefcase-outline" size={12} color="#103B31" style={{ marginRight: 4 }} />
-                    <Text style={styles.taskTitleTag} numberOfLines={1}>
-                      {item.task_title}
-                    </Text>
-                  </View>
-
-                  <View style={styles.rowBottom}>
-                    <Text
-                      style={[
-                        styles.lastMessageText,
-                        item.unread_count > 0 && styles.unreadLastMessageText,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {item.last_message.content}
-                    </Text>
-                    {item.unread_count > 0 && (
-                      <View style={styles.unreadBadge}>
-                        <Text style={styles.unreadBadgeText}>{item.unread_count}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            renderItem={({ item }) => renderConversationItem(item)}
             ListEmptyComponent={
               !isLoading ? (
                 <View style={styles.emptyContainer}>
@@ -433,15 +434,15 @@ export const InboxScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ffffff',
   },
   searchHeader: {
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
   },
   searchInputWrapper: {
     flexDirection: 'row',
@@ -449,54 +450,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     borderRadius: 12,
     paddingHorizontal: 12,
-    height: 42,
+    height: 40,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 14.5,
     color: '#0f172a',
     paddingVertical: 0,
   },
   searchScrollContent: {
-    padding: 16,
+    paddingTop: 0,
     paddingBottom: 130,
   },
   searchSection: {
-    marginBottom: 20,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '800',
-    color: '#64748b',
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    marginLeft: 2,
-  },
-  userResultCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  userSubtitle: {
-    fontSize: 12,
     color: '#94a3b8',
-    marginTop: 1,
+    letterSpacing: 0.6,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+    backgroundColor: '#f8fafc',
+    textTransform: 'uppercase',
   },
-  messageUserBtn: {
+  messageUserPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#103B31',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    backgroundColor: '#e8f3ef',
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 8,
   },
-  messageUserBtnText: {
-    color: '#ffffff',
+  messageUserPillText: {
+    color: '#103B31',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -504,7 +493,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24,
   },
   searchLoadingText: {
     marginLeft: 8,
@@ -517,89 +506,100 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 16,
     paddingBottom: 130,
   },
-  conversationCard: {
+  conversationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  avatarWrapper: {
+    marginRight: 14,
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+  },
+  avatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   avatarText: {
     color: '#ffffff',
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   contentCol: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   rowTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   userName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0f172a',
     marginRight: 6,
   },
   userHandleText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#103B31',
+    fontWeight: '500',
+    color: '#64748b',
   },
   timeText: {
     fontSize: 12,
     color: '#94a3b8',
+    fontWeight: '400',
+  },
+  unreadTimeText: {
+    color: '#103B31',
+    fontWeight: '700',
   },
   taskTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    marginBottom: 3,
   },
   taskTitleTag: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: 11.5,
+    color: '#103B31',
     fontWeight: '600',
   },
   rowBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
   },
   lastMessageText: {
     fontSize: 14,
     color: '#64748b',
     flex: 1,
     marginRight: 8,
+    lineHeight: 18,
   },
   unreadLastMessageText: {
     color: '#0f172a',
-    fontWeight: '700',
+    fontWeight: '600',
   },
   unreadBadge: {
-    backgroundColor: '#FF6B3D',
+    backgroundColor: '#103B31',
     minWidth: 20,
     height: 20,
     borderRadius: 10,
@@ -611,6 +611,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 11,
     fontWeight: '800',
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 82, // Aligns precisely with start of text after avatar
   },
   emptyContainer: {
     alignItems: 'center',
