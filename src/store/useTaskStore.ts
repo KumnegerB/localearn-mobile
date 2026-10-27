@@ -34,6 +34,7 @@ interface TaskState {
   currentTask: Task | null;
   notifiedAcceptedAppIds: Set<number>;
   notifiedCandidateAppIds: Set<number>;
+  hasLoadedPostedTasksOnce: boolean;
   hasLoadedAppliedTasksOnce: boolean;
   hasLoadedReceivedApplicationsOnce: boolean;
   isLoading: boolean;
@@ -65,6 +66,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   currentTask: null,
   notifiedAcceptedAppIds: new Set<number>(),
   notifiedCandidateAppIds: new Set<number>(),
+  hasLoadedPostedTasksOnce: false,
   hasLoadedAppliedTasksOnce: false,
   hasLoadedReceivedApplicationsOnce: false,
   isLoading: false,
@@ -92,6 +94,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         const parsedPosted = JSON.parse(postedRaw);
         if (Array.isArray(parsedPosted) && parsedPosted.length > 0 && get().myPostedTasks.length === 0) {
           updates.myPostedTasks = parsedPosted;
+          updates.hasLoadedPostedTasksOnce = true;
           initialMap = updateTasksByIdMap(parsedPosted, initialMap);
         }
       }
@@ -99,6 +102,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         const parsedApplied = JSON.parse(appliedRaw);
         if (Array.isArray(parsedApplied) && parsedApplied.length > 0 && get().myAppliedTasks.length === 0) {
           updates.myAppliedTasks = parsedApplied;
+          updates.hasLoadedAppliedTasksOnce = true;
         }
       }
 
@@ -148,8 +152,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return;
     }
 
-    const hasCached = get().myPostedTasks.length > 0;
-    if (!hasCached) {
+    const shouldShowSpinner = !get().hasLoadedPostedTasksOnce && get().myPostedTasks.length === 0;
+    if (shouldShowSpinner) {
       set({ isLoading: true, error: null });
     }
     try {
@@ -158,6 +162,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set((state) => ({
         myPostedTasks: list,
         tasksById: updateTasksByIdMap(list, state.tasksById),
+        hasLoadedPostedTasksOnce: true,
         isLoading: false,
       }));
       AsyncStorage.setItem(MY_POSTED_CACHE_KEY, JSON.stringify(list)).catch(() => {});
@@ -177,8 +182,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       return;
     }
 
-    const hasCached = get().myAppliedTasks.length > 0;
-    if (!hasCached) {
+    const shouldShowSpinner = !get().hasLoadedAppliedTasksOnce && get().myAppliedTasks.length === 0;
+    if (shouldShowSpinner) {
       set({ isLoading: true, error: null });
     }
 
@@ -298,6 +303,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       currentTask: null,
       notifiedAcceptedAppIds: new Set<number>(),
       notifiedCandidateAppIds: new Set<number>(),
+      hasLoadedPostedTasksOnce: false,
       hasLoadedAppliedTasksOnce: false,
       hasLoadedReceivedApplicationsOnce: false,
       isLoading: false,

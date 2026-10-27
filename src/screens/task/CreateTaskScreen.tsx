@@ -41,9 +41,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
   const [locationName, setLocationName] = useState('');
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<TaskFormErrors>({});
 
-  const { createTask, isLoading } = useTaskStore();
+  const { createTask } = useTaskStore();
 
   const {
     modalMode,
@@ -107,26 +108,31 @@ export const CreateTaskScreen = ({ navigation }: any) => {
 
   const doPublishTask = async () => {
     setErrors({});
+    setIsSubmitting(true);
     const numBudget = parseFloat(budget.trim());
 
-    const task = await createTask({
-      title: title.trim(),
-      description: description.trim(),
-      budget: numBudget,
-      currency,
-      category,
-      location_name: locationName.trim() || 'Neighborhood',
-      latitude: coords?.latitude || 37.7749,
-      longitude: coords?.longitude || -122.4194,
-    });
+    try {
+      const task = await createTask({
+        title: title.trim(),
+        description: description.trim(),
+        budget: numBudget,
+        currency,
+        category,
+        location_name: locationName.trim() || 'Neighborhood',
+        latitude: coords?.latitude || 37.7749,
+        longitude: coords?.longitude || -122.4194,
+      });
 
-    if (task) {
-      Alert.alert('Task Posted! 🎉', 'Your task is now visible to nearby neighbors.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
-    } else {
-      const currentError = useTaskStore.getState().error;
-      Alert.alert('Unable to Post Task', currentError || 'Failed to post task. Please verify your details.');
+      if (task) {
+        Alert.alert('Task Posted! 🎉', 'Your task is now visible to nearby neighbors.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        const currentError = useTaskStore.getState().error;
+        Alert.alert('Unable to Post Task', currentError || 'Failed to post task. Please verify your details.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -232,7 +238,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       <Text style={styles.label}>{t('createTask.location')}</Text>
       <TextInput
         style={[styles.input, !!errors.location && styles.inputError]}
-        placeholder={t('createTask.locationPlaceholder')}
+        placeholder={loadingLocation ? 'Detecting location...' : t('createTask.locationPlaceholder')}
         placeholderTextColor="#94a3b8"
         value={locationName}
         onChangeText={handleLocationChange}
@@ -270,10 +276,10 @@ export const CreateTaskScreen = ({ navigation }: any) => {
       <TouchableOpacity
         style={styles.submitButton}
         onPress={handleSubmit}
-        disabled={isLoading || loadingLocation}
+        disabled={isSubmitting}
         activeOpacity={0.85}
       >
-        {isLoading || loadingLocation ? (
+        {isSubmitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.submitButtonText}>{t('createTask.publishBtn')}</Text>
