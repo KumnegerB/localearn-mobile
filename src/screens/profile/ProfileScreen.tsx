@@ -12,6 +12,7 @@ import {
   Linking,
   TouchableWithoutFeedback,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -228,9 +229,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           <Ionicons name="pencil" size={17} color="#103B31" />
         </TouchableOpacity>
 
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.full_name?.charAt(0) || 'U'}</Text>
-        </View>
+        {user?.avatar_url ? (
+          <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user?.full_name?.charAt(0) || 'U'}</Text>
+          </View>
+        )}
 
         <Text style={styles.name}>{user?.full_name}</Text>
 
@@ -631,24 +636,29 @@ const styles = StyleSheet.create({
   },
   headerCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: -16,
+    marginTop: -16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 22,
     alignItems: 'center',
     marginBottom: 16,
     position: 'relative',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
+    borderRadius: 0,
+    borderWidth: 0,
     shadowOpacity: 0,
     elevation: 0,
   },
   editPenBtn: {
     position: 'absolute',
-    top: 14,
-    right: 14,
+    top: 16,
+    right: 16,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -656,16 +666,21 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     backgroundColor: '#103B31',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
     marginBottom: 12,
     shadowOpacity: 0,
     elevation: 0,
+  },
+  avatarImage: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    marginBottom: 12,
   },
   avatarText: {
     color: '#ffffff',
