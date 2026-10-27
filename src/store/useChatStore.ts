@@ -37,7 +37,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeChatRoom: null,
 
   setActiveChatRoom: (room) => {
-    set({ activeChatRoom: room });
+    const currentNotif = get().activeNotification;
+    if (room && currentNotif?.otherUser?.id === room.otherUserId) {
+      set({ activeChatRoom: room, activeNotification: null });
+    } else {
+      set({ activeChatRoom: room });
+    }
     if (room) {
       get().markConversationAsRead(room.taskId, room.otherUserId);
     }
@@ -48,15 +53,33 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   triggerNotification: (notif: InAppNotification) => {
+    const state = get();
+    // Do not show banner notification if user is currently inside this chat room
+    if (state.activeChatRoom?.otherUserId === notif.otherUser?.id) {
+      return;
+    }
     set({ activeNotification: notif });
   },
 
   markConversationAsRead: (taskId: number | undefined | null, otherUserId: number) => {
+    const ws = get().socket;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({ type: 'read' }));
+      } catch (e) {
+        // ignore websocket send errors
+      }
+    }
+
+    // Call REST endpoint to ensure DB has marked all messages as read
+    apiClient.post('/chat/read', {
+      other_user_id: otherUserId,
+      task_id: taskId ?? 0,
+    }).catch(() => {});
+
     set((state) => {
-      const safeTaskId = taskId ?? 0;
       const updated = state.conversations.map((c) => {
-        const cTaskId = c.task_id ?? 0;
-        if (cTaskId === safeTaskId && c.other_user.id === otherUserId) {
+        if (c.other_user.id === otherUserId) {
           return { ...c, unread_count: 0 };
         }
         return c;
@@ -76,17 +99,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await apiClient.get<Conversation[]>('/chat/conversations');
       const convs = response.data;
-      const totalUnread = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-
       const state = get();
-      const maxMsgId = convs.reduce(
+
+      // If user is currently in a chat room, treat that user's unread_count as 0
+      const sanitizedConvs = convs.map((c) => {
+        if (state.activeChatRoom?.otherUserId === c.other_user.id) {
+          return { ...c, unread_count: 0 };
+        }
+        return c;
+      });
+
+      const totalUnread = sanitizedConvs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+      const maxMsgId = sanitizedConvs.reduce(
         (max, c) => Math.max(max, c.last_message?.id || 0),
         0
       );
 
       // If we already had an initial load and a user is logged in, check for incoming new messages
       if (currentUserId && state.lastKnownMessageId > 0) {
-        for (const c of convs) {
+        for (const c of sanitizedConvs) {
           if (c.unread_count > 0 && c.last_message) {
             const isFromOther = c.last_message.sender_id !== currentUserId;
             const isNewer = c.last_message.id > state.lastKnownMessageId;
@@ -112,7 +143,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       set({
-        conversations: convs,
+        conversations: sanitizedConvs,
         unreadCount: totalUnread,
         lastKnownMessageId: Math.max(state.lastKnownMessageId, maxMsgId),
         isLoading: false,
@@ -160,9 +191,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
     ws.onmessage = (event) => {
       try {
         const newMsg: Message = JSON.parse(event.data);
-        set((state) => ({
-          messages: [...state.messages, newMsg],
-          lastKnownMessageId: Math.max(state.lastKnownMessageId, newMsg.id),
+        const state = get();
+        const isInThisRoom = state.activeChatRoom?.otherUserId === newMsg.sender_id;
+
+        if (isInThisRoom) {
+          newMsg.is_read = true;
+          // Instantly tell backend and WebSocket that message is read
+          get().markConversationAsRead(newMsg.task_id, newMsg.sender_id);
+        }
+
+        set((s) => ({
+          messages: [...s.messages, newMsg],
+          lastKnownMessageId: Math.max(s.lastKnownMessageId, newMsg.id),
         }));
       } catch (e) {
         console.error('Failed to parse incoming WebSocket message', e);

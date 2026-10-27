@@ -14,13 +14,19 @@ import { navigate } from '../../navigation/navigationRef';
 
 export const InAppNotificationBanner: React.FC = () => {
   const activeNotification = useChatStore((s) => s.activeNotification);
+  const activeChatRoom = useChatStore((s) => s.activeChatRoom);
   const dismissNotification = useChatStore((s) => s.dismissNotification);
+
+  const isInsideSameRoom = Boolean(
+    activeNotification?.otherUser?.id &&
+    activeChatRoom?.otherUserId === activeNotification.otherUser.id
+  );
 
   const slideAnim = useRef(new Animated.Value(-120)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (activeNotification) {
+    if (activeNotification && !isInsideSameRoom) {
       Animated.parallel([
         Animated.spring(slideAnim, {
           toValue: 0,
@@ -40,6 +46,8 @@ export const InAppNotificationBanner: React.FC = () => {
       }, 3000);
 
       return () => clearTimeout(timer);
+    } else if (activeNotification && isInsideSameRoom) {
+      dismissNotification();
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
@@ -90,7 +98,7 @@ export const InAppNotificationBanner: React.FC = () => {
     }
   };
 
-  if (!activeNotification) return null;
+  if (!activeNotification || isInsideSameRoom) return null;
 
   const isAcceptedType = activeNotification.type === 'APPLICATION_ACCEPTED';
   const isCandidateType = activeNotification.type === 'NEW_CANDIDATE';

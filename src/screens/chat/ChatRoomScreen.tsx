@@ -27,6 +27,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
     sendMessage,
     setActiveChatRoom,
     fetchConversations,
+    markConversationAsRead,
   } = useChatStore();
   const { user, token } = useAuthStore();
   const flatListRef = useRef<FlatList>(null);
@@ -42,9 +43,14 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
 
     return () => {
       disconnectWebSocket();
+      if (otherUser?.id) {
+        markConversationAsRead(taskId, otherUser.id);
+      }
       setActiveChatRoom(null);
       if (user?.id) {
-        fetchConversations(user.id);
+        setTimeout(() => {
+          fetchConversations(user.id);
+        }, 200);
       }
     };
   }, [taskId, otherUser?.id, token]);

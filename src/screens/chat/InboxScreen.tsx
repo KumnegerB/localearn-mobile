@@ -18,7 +18,7 @@ import { apiClient } from '../../api/client';
 import { User } from '../../types';
 
 export const InboxScreen = ({ navigation }: any) => {
-  const { conversations, fetchConversations, isLoading } = useChatStore();
+  const { conversations, fetchConversations, isLoading, markConversationAsRead } = useChatStore();
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -127,12 +127,14 @@ export const InboxScreen = ({ navigation }: any) => {
   const handleOpenUserChat = (targetUser: User) => {
     const existing = uniqueConversations.find((c) => c.other_user.id === targetUser.id);
     if (existing) {
+      markConversationAsRead(existing.task_id, existing.other_user.id);
       navigation.navigate('ChatRoom', {
         taskId: existing.task_id,
         taskTitle: existing.task_title,
         otherUser: existing.other_user,
       });
     } else {
+      markConversationAsRead(0, targetUser.id);
       navigation.navigate('ChatRoom', {
         taskId: 0,
         taskTitle: 'Direct Message',
@@ -212,13 +214,14 @@ export const InboxScreen = ({ navigation }: any) => {
                   key={`conv-${item.other_user.id}`}
                   style={styles.conversationCard}
                   activeOpacity={0.7}
-                  onPress={() =>
+                  onPress={() => {
+                    markConversationAsRead(item.task_id, item.other_user.id);
                     navigation.navigate('ChatRoom', {
                       taskId: item.task_id,
                       taskTitle: item.task_title,
                       otherUser: item.other_user,
-                    })
-                  }
+                    });
+                  }}
                 >
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
@@ -351,13 +354,14 @@ export const InboxScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={styles.conversationCard}
                 activeOpacity={0.7}
-                onPress={() =>
+                onPress={() => {
+                  markConversationAsRead(item.task_id, item.other_user.id);
                   navigation.navigate('ChatRoom', {
                     taskId: item.task_id,
                     taskTitle: item.task_title,
                     otherUser: item.other_user,
-                  })
-                }
+                  });
+                }}
               >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>
