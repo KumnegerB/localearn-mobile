@@ -12,17 +12,17 @@ interface ChatState {
   unreadCount: number;
   activeNotification: InAppNotification | null;
   lastKnownMessageId: number;
-  activeChatRoom: { taskId: number; otherUserId: number } | null;
+  activeChatRoom: { taskId?: number | null; otherUserId: number } | null;
 
-  setActiveChatRoom: (room: { taskId: number; otherUserId: number } | null) => void;
+  setActiveChatRoom: (room: { taskId?: number | null; otherUserId: number } | null) => void;
   dismissNotification: () => void;
   triggerNotification: (notif: InAppNotification) => void;
-  markConversationAsRead: (taskId: number, otherUserId: number) => void;
+  markConversationAsRead: (taskId: number | undefined | null, otherUserId: number) => void;
   fetchConversations: (currentUserId?: number) => Promise<void>;
-  fetchMessages: (taskId: number, otherUserId: number) => Promise<void>;
-  connectWebSocket: (taskId: number, otherUserId: number, token: string) => void;
+  fetchMessages: (taskId: number | undefined | null, otherUserId: number) => Promise<void>;
+  connectWebSocket: (taskId: number | undefined | null, otherUserId: number, token: string) => void;
   disconnectWebSocket: () => void;
-  sendMessage: (content: string) => void;
+  sendMessage: (content: string, fallback?: { receiverId: number; taskId?: number | null }) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -51,10 +51,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ activeNotification: notif });
   },
 
-  markConversationAsRead: (taskId: number, otherUserId: number) => {
+  markConversationAsRead: (taskId: number | undefined | null, otherUserId: number) => {
     set((state) => {
+      const safeTaskId = taskId ?? 0;
       const updated = state.conversations.map((c) => {
-        if (c.task_id === taskId && c.other_user.id === otherUserId) {
+        const cTaskId = c.task_id ?? 0;
+        if (cTaskId === safeTaskId && c.other_user.id === otherUserId) {
           return { ...c, unread_count: 0 };
         }
         return c;
@@ -95,11 +97,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
               set({
                 activeNotification: {
                   id: String(c.last_message.id),
-                  title: c.task_title,
+                  title: c.task_title || 'Direct Message',
                   senderName: c.other_user.full_name || 'Neighbor',
                   message: c.last_message.content,
-                  taskId: c.task_id,
-                  taskTitle: c.task_title,
+                  taskId: c.task_id ?? 0,
+                  taskTitle: c.task_title || 'Direct Message',
                   otherUser: c.other_user,
                 },
               });
@@ -124,29 +126,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  fetchMessages: async (taskId: number, otherUserId: number) => {
+  fetchMessages: async (taskId: number | undefined | null, otherUserId: number) => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.get<Message[]>(`/chat/task/${taskId}/history`, {
+      const safeTaskId = taskId ?? 0;
+      const response = await apiClient.get<Message[]>(`/chat/task/${safeTaskId}/history`, {
         params: { other_user_id: otherUserId },
       });
       set({ messages: response.data, isLoading: false });
       // Mark as read in local conversation state
-      get().markConversationAsRead(taskId, otherUserId);
+      get().markConversationAsRead(safeTaskId, otherUserId);
     } catch (err) {
       console.error('Failed to load message history', err);
       set({ isLoading: false });
     }
   },
 
-  connectWebSocket: (taskId: number, otherUserId: number, token: string) => {
+  connectWebSocket: (taskId: number | undefined | null, otherUserId: number, token: string) => {
     // Clean up any existing connection
     const currentSocket = get().socket;
     if (currentSocket) {
       currentSocket.close();
     }
 
-    const wsUrl = getWebSocketUrl(taskId, otherUserId, token);
+    const safeTaskId = taskId ?? 0;
+    const wsUrl = getWebSocketUrl(safeTaskId, otherUserId, token);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -185,10 +189,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: (content: string) => {
+  sendMessage: async (content: string, fallback?: { receiverId: number; taskId?: number | null }) => {
     const ws = get().socket;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ content }));
+      return;
+    }
+
+    // Fallback to REST if WebSocket is not currently connected
+    if (fallback?.receiverId) {
+      try {
+        const response = await apiClient.post<Message>('/chat/send', {
+          content,
+          receiver_id: fallback.receiverId,
+          task_id: fallback.taskId ?? 0,
+        });
+        const newMsg = response.data;
+        set((state) => ({
+          messages: [...state.messages, newMsg],
+          lastKnownMessageId: Math.max(state.lastKnownMessageId, newMsg.id),
+        }));
+      } catch (e) {
+        console.error('Failed to send message via REST fallback', e);
+      }
     }
   },
 }));

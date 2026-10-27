@@ -51,7 +51,10 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    sendMessage(inputText.trim());
+    sendMessage(inputText.trim(), {
+      receiverId: otherUser?.id,
+      taskId: taskId ?? 0,
+    });
     setInputText('');
   };
 

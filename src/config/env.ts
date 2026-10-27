@@ -26,7 +26,8 @@ const getHost = () => {
 export const API_BASE_URL = 'https://local-earn-backend.onrender.com';
 export const API_V1_URL = `${API_BASE_URL}/api/v1`;
 
-export const getWebSocketUrl = (taskId: number, otherUserId: number, token: string) => {
-  return `wss://local-earn-backend.onrender.com/api/v1/chat/ws/${taskId}?other_user_id=${otherUserId}&token=${token}`;
+export const getWebSocketUrl = (taskId: number | undefined | null, otherUserId: number, token: string) => {
+  const safeTaskId = taskId ?? 0;
+  return `wss://local-earn-backend.onrender.com/api/v1/chat/ws/${safeTaskId}?other_user_id=${otherUserId}&token=${token}`;
 };
 

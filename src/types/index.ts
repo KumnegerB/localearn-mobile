@@ -67,7 +67,7 @@ export interface TaskApplication {
 
 export interface Message {
   id: number;
-  task_id: number;
+  task_id?: number | null;
   sender_id: number;
   receiver_id?: number | null;
   content: string;
@@ -81,8 +81,8 @@ export interface Message {
 }
 
 export interface Conversation {
-  task_id: number;
-  task_title: string;
+  task_id?: number | null;
+  task_title?: string | null;
   other_user: User;
   last_message: Message;
   unread_count: number;
@@ -93,8 +93,8 @@ export interface InAppNotification {
   title: string;
   senderName: string;
   message: string;
-  taskId: number;
-  taskTitle: string;
+  taskId?: number | null;
+  taskTitle?: string | null;
   otherUser?: User;
   type?: 'MESSAGE' | 'APPLICATION_ACCEPTED' | 'NEW_CANDIDATE';
 }
