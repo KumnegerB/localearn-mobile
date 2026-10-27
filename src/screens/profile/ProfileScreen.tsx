@@ -19,6 +19,7 @@ import { validateFullName, validateUsername } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
+import { resetToLanding } from '../../navigation/navigationRef';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -156,7 +157,14 @@ export const ProfileScreen = ({ navigation }: any) => {
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => logout() },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          resetToLanding();
+        },
+      },
     ]);
   };
 
