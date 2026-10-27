@@ -7,6 +7,7 @@ interface ChatState {
   conversations: Conversation[];
   messages: Message[];
   isLoading: boolean;
+  isMessagesLoading: boolean;
   isConnected: boolean;
   socket: WebSocket | null;
   unreadCount: number;
@@ -30,6 +31,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   messages: [],
   isLoading: false,
+  isMessagesLoading: false,
   isConnected: false,
   socket: null,
   unreadCount: 0,
@@ -43,7 +45,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const isDifferentRoom = !currentRoom || (room && currentRoom.otherUserId !== room.otherUserId);
 
     if (room && isDifferentRoom) {
-      set({ messages: [], isLoading: true });
+      set({ messages: [], isMessagesLoading: true });
     }
 
     if (room && currentNotif?.otherUser?.id === room.otherUserId) {
@@ -57,7 +59,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearMessages: () => {
-    set({ messages: [], isLoading: false });
+    set({ messages: [], isMessagesLoading: false });
   },
 
   dismissNotification: () => {
@@ -170,18 +172,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchMessages: async (taskId: number | undefined | null, otherUserId: number) => {
-    set({ isLoading: true, messages: [] });
+    set({ isMessagesLoading: true, messages: [] });
     try {
       const safeTaskId = taskId ?? 0;
       const response = await apiClient.get<Message[]>(`/chat/task/${safeTaskId}/history`, {
         params: { other_user_id: otherUserId },
       });
-      set({ messages: response.data, isLoading: false });
+      set({ messages: response.data, isMessagesLoading: false });
       // Mark as read in local conversation state
       get().markConversationAsRead(safeTaskId, otherUserId);
     } catch (err) {
       console.error('Failed to load message history', err);
-      set({ isLoading: false });
+      set({ isMessagesLoading: false });
     }
   },
 

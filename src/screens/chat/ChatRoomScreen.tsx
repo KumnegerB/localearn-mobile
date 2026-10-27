@@ -19,10 +19,10 @@ import { useAuthStore } from '../../store/useAuthStore';
 export const ChatRoomScreen = ({ route, navigation }: any) => {
   const { taskId, taskTitle, otherUser } = route.params || {};
   const [inputText, setInputText] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const insets = useSafeAreaInsets();
   const {
     messages,
-    isLoading,
     fetchMessages,
     connectWebSocket,
     disconnectWebSocket,
@@ -36,15 +36,22 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+    let isMounted = true;
     if (otherUser?.id) {
+      setLoadingMessages(true);
       setActiveChatRoom({ taskId, otherUserId: otherUser.id });
-      fetchMessages(taskId, otherUser.id);
+      fetchMessages(taskId, otherUser.id).finally(() => {
+        if (isMounted) {
+          setLoadingMessages(false);
+        }
+      });
       if (token) {
         connectWebSocket(taskId, otherUser.id, token);
       }
     }
 
     return () => {
+      isMounted = false;
       disconnectWebSocket();
       if (otherUser?.id) {
         markConversationAsRead(taskId, otherUser.id);
@@ -157,7 +164,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         style={styles.container}
       >
-        {isLoading && messages.length === 0 ? (
+        {loadingMessages ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#103B31" />
           </View>
