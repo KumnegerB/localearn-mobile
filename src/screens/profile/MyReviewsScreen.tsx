@@ -16,28 +16,51 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { Review } from '../../types';
 import { useTranslation } from '../../i18n';
 
-export const MyReviewsScreen = ({ navigation }: any) => {
+// In-memory reviews cache for instant back-and-forth transitions without spinners
+const reviewsMemoryCache = new Map<number, { reviews: Review[]; timestamp: number }>();
+
+export const MyReviewsScreen = ({ navigation, route }: any) => {
   const { user } = useAuthStore();
+  const targetUserId = route?.params?.userId || user?.id;
+
   const insets = useSafeAreaInsets();
   const { t, language } = useTranslation();
 
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = targetUserId ? reviewsMemoryCache.get(targetUserId)?.reviews : undefined;
+  const [reviews, setReviews] = useState<Review[]>(cached || []);
+  const [loading, setLoading] = useState(cached ? false : true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchReviews = useCallback(async (isRefresh = false) => {
-    if (!user?.id) return;
-    if (!isRefresh) setLoading(true);
+    if (!targetUserId) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+    if (!isRefresh && !reviewsMemoryCache.has(targetUserId)) {
+      setLoading(true);
+    }
+    setError(null);
     try {
-      const res = await apiClient.get<Review[]>(`/reviews/user/${user.id}`);
-      setReviews(res.data || []);
-    } catch (err) {
+      const res = await apiClient.get<Review[]>(`/reviews/user/${targetUserId}`);
+      const fresh = res.data || [];
+      setReviews(fresh);
+      reviewsMemoryCache.set(targetUserId, { reviews: fresh, timestamp: Date.now() });
+    } catch (err: any) {
       console.warn('Failed to fetch user reviews:', err);
+      if (!reviewsMemoryCache.has(targetUserId)) {
+        setError(
+          language === 'am'
+            ? 'ግምገማዎችን መጫን አልተቻለም። እባክዎ ግንኙነትዎን ያረጋግጡ።'
+            : 'Could not load reviews. Please check your network connection.'
+        );
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id]);
+  }, [targetUserId, language]);
 
   useEffect(() => {
     fetchReviews();
@@ -149,7 +172,27 @@ export const MyReviewsScreen = ({ navigation }: any) => {
         <View style={{ width: 36 }} />
       </View>
 
-      {loading && !refreshing ? (
+      {error && !loading && reviews.length === 0 ? (
+        <View style={styles.errorContainer}>
+          <View style={styles.errorIconCircle}>
+            <Ionicons name="cloud-offline-outline" size={36} color="#ef4444" />
+          </View>
+          <Text style={styles.errorTitle}>
+            {language === 'am' ? 'ግምገማዎችን መጫን አልተቻለም' : 'Could Not Load Reviews'}
+          </Text>
+          <Text style={styles.errorSubtitle}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchReviews()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="refresh" size={16} color="#ffffff" style={{ marginRight: 6 }} />
+            <Text style={styles.retryButtonText}>
+              {language === 'am' ? 'ደግመው ይሞክሩ' : 'Tap to Retry'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : loading && !refreshing && reviews.length === 0 ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#103B31" />
         </View>
@@ -488,6 +531,54 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  errorIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#103B31',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    shadowColor: '#103B31',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
 

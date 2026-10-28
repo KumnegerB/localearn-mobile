@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { AppNotification } from '../types';
+import { triggerLocalNotification } from '../services/notificationService';
 
 const NOTIFICATIONS_CACHE_KEY = '@localearn_cached_notifications';
 
@@ -71,6 +72,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       const response = await apiClient.get<AppNotification[]>('/notifications');
       const list = response.data;
       const unread = list.filter((n) => !n.is_read).length;
+
+      // Trigger native notification banner for newly arrived unread notifications
+      if (get().hasLoadedOnce) {
+        const oldIds = new Set(get().notifications.map((n) => n.id));
+        const brandNew = list.filter((n) => !n.is_read && !oldIds.has(n.id));
+        for (const item of brandNew.slice(0, 3)) {
+          triggerLocalNotification(item.title, item.message, { type: item.type, taskId: item.task_id });
+        }
+      }
+
       set({
         notifications: list,
         unreadCount: unread,

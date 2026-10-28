@@ -1,23 +1,16 @@
 import * as Device from 'expo-device';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { apiClient } from '../api/client';
-
-// Detect whether running inside the standard Expo Go client app from the app store
-const isExpoGo =
-  Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
-  (Constants as any).appOwnership === 'expo';
 
 // Lazily and safely resolve expo-notifications to prevent 'Cannot find native module ExpoTopicSubscriptionModule'
 // in Expo Go on Android (Expo issue #52175). It loads smoothly in standalone EAS preview builds.
 let Notifications: any = null;
-if (!isExpoGo || Platform.OS !== 'android') {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    Notifications = require('expo-notifications');
-  } catch (e) {
-    console.warn('[PUSH] expo-notifications native module not registered in this runtime:', e);
-  }
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Notifications = require('expo-notifications');
+} catch (e) {
+  console.warn('[PUSH] expo-notifications native module not registered in this runtime:', e);
 }
 
 // Configure foreground notification behavior if the native module is present
@@ -34,11 +27,84 @@ if (Notifications && typeof Notifications.setNotificationHandler === 'function')
 }
 
 /**
+ * Configure Android notification channels for high priority display.
+ */
+export const setupNotificationChannels = async (): Promise<void> => {
+  if (Platform.OS === 'android' && Notifications && typeof Notifications.setNotificationChannelAsync === 'function') {
+    try {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'General',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#103B31',
+        sound: 'default',
+        enableVibrate: true,
+      });
+      await Notifications.setNotificationChannelAsync('chat_messages', {
+        name: 'Chat Messages',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 200, 200, 200],
+        lightColor: '#103B31',
+        sound: 'default',
+        enableVibrate: true,
+      });
+    } catch (e) {
+      console.warn('[PUSH] Failed to setup Android notification channels:', e);
+    }
+  }
+};
+
+/**
+ * Triggers an immediate local system notification banner on the device tray.
+ * Operates completely offline without requiring Firebase / FCM credentials!
+ */
+export const triggerLocalNotification = async (
+  title: string,
+  body: string,
+  data?: Record<string, any>
+): Promise<void> => {
+  if (!Notifications || typeof Notifications.scheduleNotificationAsync !== 'function') {
+    return;
+  }
+  try {
+    await setupNotificationChannels();
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: data || {},
+        sound: 'default',
+        channelId: data?.type === 'CHAT_MESSAGE' ? 'chat_messages' : 'default',
+      },
+      trigger: null,
+    });
+  } catch (err) {
+    console.warn('[PUSH] Failed to trigger local notification:', err);
+  }
+};
+
+/**
+ * Test helper for the user to confirm notifications work on their device.
+ */
+export const sendTestNotification = async (): Promise<boolean> => {
+  try {
+    await triggerLocalNotification(
+      '🎉 ስራ (Sira) Notifications Active!',
+      'Device notification permissions and audio channels are working properly.',
+      { type: 'TEST_NOTIFICATION' }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Requests push notification permissions and retrieves the Expo Push Token.
  */
 export const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   if (!Notifications) {
-    console.log('[PUSH] Push notifications are not supported inside Expo Go on Android (SDK issue #52175). They will function in the standalone EAS build.');
+    console.log('[PUSH] Notifications native module not available in this runtime.');
     return null;
   }
 
@@ -48,16 +114,7 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
   }
 
   try {
-    if (Platform.OS === 'android' && typeof Notifications.setNotificationChannelAsync === 'function') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'General',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#103B31',
-        sound: 'default',
-        enableVibrate: true,
-      });
-    }
+    await setupNotificationChannels();
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -68,7 +125,7 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
     }
 
     if (finalStatus !== 'granted') {
-      console.log('[PUSH] Permission not granted for push notifications');
+      console.log('[PUSH] Permission not granted for push notifications (status: ' + finalStatus + ')');
       return null;
     }
 
@@ -77,11 +134,19 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
       Constants.easConfig?.projectId ??
       'b3659f5d-c988-41c3-98c3-83064c768433';
 
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId,
-    });
-
-    return tokenData.data;
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
+      console.log('[PUSH] Successfully obtained Expo push token:', tokenData.data);
+      return tokenData.data;
+    } catch (fcmError: any) {
+      console.warn(
+        '[PUSH] Note: Remote push token requires Firebase FCM credentials (google-services.json) in standalone Android APKs:',
+        fcmError?.message || fcmError
+      );
+      return null;
+    }
   } catch (error) {
     console.warn('[PUSH] Error getting push token:', error);
     return null;

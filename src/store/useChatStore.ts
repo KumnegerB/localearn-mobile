@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import { getWebSocketUrl } from '../config/env';
 import { Message, Conversation, InAppNotification } from '../types';
+import { triggerLocalNotification } from '../services/notificationService';
 
 const CHAT_CONVERSATIONS_KEY = '@localearn_cached_conversations';
 const CHAT_ROOMS_KEY = '@localearn_cached_chat_rooms';
@@ -147,6 +148,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return;
     }
     set({ activeNotification: notif });
+    triggerLocalNotification(
+      `${notif.senderName} (${notif.title})`,
+      notif.message,
+      { type: notif.type || 'CHAT_MESSAGE', taskId: notif.taskId, senderId: notif.otherUser?.id }
+    );
   },
 
   markConversationAsRead: (taskId: number | undefined | null, otherUserId: number) => {
@@ -224,6 +230,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
                   otherUser: c.other_user,
                 },
               });
+              triggerLocalNotification(
+                c.other_user.full_name || 'New Message',
+                c.last_message.content,
+                { type: 'CHAT_MESSAGE', taskId: c.task_id, senderId: c.other_user.id }
+              );
               break;
             }
           }
@@ -324,6 +335,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
           newMsg.is_read = true;
           // Instantly tell backend and WebSocket that message is read
           get().markConversationAsRead(newMsg.task_id, otherUserId);
+        } else if (!isInThisRoom && isFromPartner) {
+          triggerLocalNotification(
+            'New Message',
+            newMsg.content,
+            { type: 'CHAT_MESSAGE', taskId: newMsg.task_id ?? safeTaskId, senderId: otherUserId }
+          );
         }
 
         // Deduplicate or replace optimistic message (which had negative ID)
