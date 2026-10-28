@@ -35,7 +35,14 @@ interface ChatState {
   fetchMessages: (taskId: number | undefined | null, otherUserId: number) => Promise<void>;
   connectWebSocket: (taskId: number | undefined | null, otherUserId: number, token: string) => void;
   disconnectWebSocket: () => void;
-  sendMessage: (content: string, fallback?: { receiverId: number; taskId?: number | null }) => Promise<void>;
+  sendMessage: (
+    content: string,
+    fallback?: {
+      receiverId: number;
+      taskId?: number | null;
+      sender?: { id: number; full_name?: string; avatar_url?: string | null };
+    }
+  ) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -298,25 +305,67 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         const newMsg: Message = JSON.parse(event.data);
         const state = get();
-        const isInThisRoom = state.activeChatRoom?.otherUserId === newMsg.sender_id;
-        const roomKey = getRoomKey(newMsg.task_id, isInThisRoom ? newMsg.sender_id : newMsg.receiver_id || otherUserId);
+
+        // A message belongs to this conversation if either the sender or receiver is otherUserId
+        const isFromPartner = newMsg.sender_id === otherUserId;
+        const isToPartner = newMsg.receiver_id === otherUserId;
+
+        // Is the user currently inside this chat room?
+        const activeOtherId = state.activeChatRoom?.otherUserId;
+        const isInThisRoom =
+          activeOtherId === otherUserId ||
+          activeOtherId === newMsg.sender_id ||
+          activeOtherId === newMsg.receiver_id;
+
+        const roomKey = getRoomKey(newMsg.task_id ?? safeTaskId, otherUserId);
         const currentRoomMsgs = state.messagesByRoom[roomKey] || [];
 
-        if (isInThisRoom) {
+        if (isInThisRoom && isFromPartner) {
           newMsg.is_read = true;
           // Instantly tell backend and WebSocket that message is read
-          get().markConversationAsRead(newMsg.task_id, newMsg.sender_id);
+          get().markConversationAsRead(newMsg.task_id, otherUserId);
         }
 
-        const updatedRoomMsgs = [...currentRoomMsgs, newMsg];
-        set((s) => ({
-          messages: isInThisRoom ? [...s.messages, newMsg] : s.messages,
-          messagesByRoom: {
-            ...s.messagesByRoom,
-            [roomKey]: updatedRoomMsgs,
-          },
-          lastKnownMessageId: Math.max(s.lastKnownMessageId, newMsg.id),
-        }));
+        // Deduplicate or replace optimistic message (which had negative ID)
+        const existingIdx = currentRoomMsgs.findIndex(
+          (m) =>
+            m.id === newMsg.id ||
+            (m.id < 0 && m.content === newMsg.content && m.sender_id === newMsg.sender_id)
+        );
+
+        let updatedRoomMsgs: Message[];
+        if (existingIdx >= 0) {
+          updatedRoomMsgs = [...currentRoomMsgs];
+          updatedRoomMsgs[existingIdx] = newMsg;
+        } else {
+          updatedRoomMsgs = [...currentRoomMsgs, newMsg];
+        }
+
+        set((s) => {
+          let updatedMessages = s.messages;
+          if (isInThisRoom) {
+            const msgIdx = s.messages.findIndex(
+              (m) =>
+                m.id === newMsg.id ||
+                (m.id < 0 && m.content === newMsg.content && m.sender_id === newMsg.sender_id)
+            );
+            if (msgIdx >= 0) {
+              updatedMessages = [...s.messages];
+              updatedMessages[msgIdx] = newMsg;
+            } else {
+              updatedMessages = [...s.messages, newMsg];
+            }
+          }
+
+          return {
+            messages: updatedMessages,
+            messagesByRoom: {
+              ...s.messagesByRoom,
+              [roomKey]: updatedRoomMsgs,
+            },
+            lastKnownMessageId: Math.max(s.lastKnownMessageId, newMsg.id),
+          };
+        });
 
         AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(get().messagesByRoom)).catch(() => {});
       } catch (e) {
@@ -344,33 +393,97 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: async (content: string, fallback?: { receiverId: number; taskId?: number | null }) => {
+  sendMessage: async (
+    content: string,
+    fallback?: {
+      receiverId: number;
+      taskId?: number | null;
+      sender?: { id: number; full_name?: string; avatar_url?: string | null };
+    }
+  ) => {
     const ws = get().socket;
+    const safeTaskId = fallback?.taskId ?? 0;
+    const receiverId = fallback?.receiverId;
+
+    let sender = fallback?.sender;
+    if (!sender) {
+      try {
+        sender = require('./useAuthStore').useAuthStore?.getState?.()?.user;
+      } catch {
+        // ignore
+      }
+    }
+    const senderId = sender?.id;
+
+    // 1. Optimistic Update: Immediately add message to screen with 0ms delay
+    if (receiverId && senderId) {
+      const optimisticMsg: Message = {
+        id: -Date.now(),
+        content,
+        sender_id: senderId,
+        receiver_id: receiverId,
+        task_id: safeTaskId,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        sender: {
+          id: senderId,
+          full_name: sender?.full_name || 'Me',
+          avatar_url: sender?.avatar_url || null,
+        },
+      };
+
+      const roomKey = getRoomKey(safeTaskId, receiverId);
+      set((state) => {
+        const currentRoomMsgs = state.messagesByRoom[roomKey] || [];
+        return {
+          messages: [...state.messages, optimisticMsg],
+          messagesByRoom: {
+            ...state.messagesByRoom,
+            [roomKey]: [...currentRoomMsgs, optimisticMsg],
+          },
+        };
+      });
+    }
+
+    // 2. Dispatch via active WebSocket connection
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ content }));
       return;
     }
 
-    // Fallback to REST if WebSocket is not currently connected
-    if (fallback?.receiverId) {
+    // 3. Fallback to REST API if WebSocket is offline
+    if (receiverId) {
       try {
         const response = await apiClient.post<Message>('/chat/send', {
           content,
-          receiver_id: fallback.receiverId,
-          task_id: fallback.taskId ?? 0,
+          receiver_id: receiverId,
+          task_id: safeTaskId,
         });
         const newMsg = response.data;
-        const roomKey = getRoomKey(fallback.taskId, fallback.receiverId);
+        const roomKey = getRoomKey(safeTaskId, receiverId);
         set((state) => {
           const currentRoomMsgs = state.messagesByRoom[roomKey] || [];
-          const updatedRooms = {
-            ...state.messagesByRoom,
-            [roomKey]: [...currentRoomMsgs, newMsg],
-          };
-          AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(updatedRooms)).catch(() => {});
+          const updatedRoomMsgs = currentRoomMsgs.map((m) =>
+            m.id < 0 && m.content === content ? newMsg : m
+          );
+          const updatedMessages = state.messages.map((m) =>
+            m.id < 0 && m.content === content ? newMsg : m
+          );
+
+          AsyncStorage.setItem(
+            CHAT_ROOMS_KEY,
+            JSON.stringify({
+              ...state.messagesByRoom,
+              [roomKey]: updatedRoomMsgs,
+            })
+          ).catch(() => {});
+
           return {
-            messages: [...state.messages, newMsg],
-            messagesByRoom: updatedRooms,
+            messages: updatedMessages,
+            messagesByRoom: {
+              ...state.messagesByRoom,
+              [roomKey]: updatedRoomMsgs,
+            },
             lastKnownMessageId: Math.max(state.lastKnownMessageId, newMsg.id),
           };
         });

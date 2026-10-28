@@ -90,6 +90,9 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
     sendMessage(inputText.trim(), {
       receiverId: otherUser?.id,
       taskId: taskId ?? 0,
+      sender: user
+        ? { id: user.id, full_name: user.full_name, avatar_url: user.avatar_url }
+        : undefined,
     });
     setInputText('');
   };
