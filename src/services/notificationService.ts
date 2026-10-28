@@ -1,31 +1,54 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { apiClient } from '../api/client';
 
-// Configure foreground notification behavior: show heads-up alert banner, sound, and badge
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Detect whether running inside the standard Expo Go client app from the app store
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
+  (Constants as any).appOwnership === 'expo';
+
+// Lazily and safely resolve expo-notifications to prevent 'Cannot find native module ExpoTopicSubscriptionModule'
+// in Expo Go on Android (Expo issue #52175). It loads smoothly in standalone EAS preview builds.
+let Notifications: any = null;
+if (!isExpoGo || Platform.OS !== 'android') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    Notifications = require('expo-notifications');
+  } catch (e) {
+    console.warn('[PUSH] expo-notifications native module not registered in this runtime:', e);
+  }
+}
+
+// Configure foreground notification behavior if the native module is present
+if (Notifications && typeof Notifications.setNotificationHandler === 'function') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * Requests push notification permissions and retrieves the Expo Push Token.
  */
 export const registerForPushNotificationsAsync = async (): Promise<string | null> => {
+  if (!Notifications) {
+    console.log('[PUSH] Push notifications are not supported inside Expo Go on Android (SDK issue #52175). They will function in the standalone EAS build.');
+    return null;
+  }
+
   if (!Device.isDevice) {
     console.log('[PUSH] Must run on a physical device for remote push notifications');
     return null;
   }
 
   try {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === 'android' && typeof Notifications.setNotificationChannelAsync === 'function') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'General',
         importance: Notifications.AndroidImportance.MAX,
@@ -95,9 +118,13 @@ export const clearPushTokenOnBackend = async (): Promise<void> => {
  * Attaches a listener for when a user interacts with / taps an incoming push notification.
  */
 export const setupNotificationResponseListener = (navigationRef: any) => {
-  return Notifications.addNotificationResponseReceivedListener((response) => {
+  if (!Notifications || typeof Notifications.addNotificationResponseReceivedListener !== 'function') {
+    return { remove: () => {} };
+  }
+
+  return Notifications.addNotificationResponseReceivedListener((response: any) => {
     try {
-      const data = response.notification.request.content.data;
+      const data = response?.notification?.request?.content?.data;
       if (!data || !navigationRef?.isReady()) return;
 
       const { type, taskId, taskTitle, senderId, senderName } = data;
