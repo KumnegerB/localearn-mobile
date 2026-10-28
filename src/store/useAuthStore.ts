@@ -6,6 +6,7 @@ import { useChatStore } from './useChatStore';
 import { useTaskStore } from './useTaskStore';
 import { useNotificationStore } from './useNotificationStore';
 import { invalidateUserProfileCache } from '../screens/profile/UserProfileScreen';
+import { clearPushTokenOnBackend } from '../services/notificationService';
 
 interface AuthState {
   user: User | null;
@@ -81,6 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
+      await clearPushTokenOnBackend();
       await Promise.all([
         AsyncStorage.removeItem('@localearn_token'),
         useChatStore.getState().clearAllChatCache(),

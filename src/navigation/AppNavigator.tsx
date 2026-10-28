@@ -12,6 +12,7 @@ import { useNotificationStore } from '../store/useNotificationStore';
 import { useTranslation } from '../i18n';
 import { LanguageSelectorModal } from '../components/common/LanguageSelectorModal';
 import { navigationRef } from './navigationRef';
+import { syncPushTokenWithBackend, setupNotificationResponseListener } from '../services/notificationService';
 import { SiraLogo } from '../components/common/SiraLogo';
 import { InAppNotificationBanner } from '../components/chat/InAppNotificationBanner';
 import { LandingScreen } from '../screens/auth/LandingScreen';
@@ -144,10 +145,19 @@ export const AppNavigator = () => {
     checkAuth();
   }, []);
 
+  // Listen for user taps on incoming push notifications
+  useEffect(() => {
+    const sub = setupNotificationResponseListener(navigationRef);
+    return () => {
+      sub.remove();
+    };
+  }, []);
+
   // Background polling for conversations, messages, notifications & alerts
   useEffect(() => {
     if (!user?.id) return;
 
+    syncPushTokenWithBackend();
     fetchConversations(user.id);
     fetchMyAppliedTasks();
     fetchReceivedApplications();

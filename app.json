@@ -34,7 +34,14 @@
     "plugins": [
       "expo-status-bar",
       "expo-font",
-      "expo-location"
+      "expo-location",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#103B31"
+        }
+      ]
     ]
   }
 }
