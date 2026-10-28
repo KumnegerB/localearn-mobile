@@ -31,6 +31,7 @@ import { ChatRoomScreen } from '../screens/chat/ChatRoomScreen';
 import { LeaveReviewScreen } from '../screens/task/LeaveReviewScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { UserProfileScreen } from '../screens/profile/UserProfileScreen';
+import { MyReviewsScreen } from '../screens/profile/MyReviewsScreen';
 import { NotificationScreen } from '../screens/notifications/NotificationScreen';
 import { RulesAndResponsibilitiesScreen } from '../screens/rules/RulesAndResponsibilitiesScreen';
 import { FloatingBottomNavbar } from '../components/navigation/FloatingBottomNavbar';
@@ -249,6 +250,11 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="UserProfile"
           component={UserProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="MyReviews"
+          component={MyReviewsScreen}
           options={{ headerShown: false }}
         />
 

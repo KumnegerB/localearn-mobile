@@ -273,11 +273,15 @@ export const ProfileScreen = ({ navigation }: any) => {
         )}
 
         {user?.rating_count && user.rating_count > 0 ? (
-          <View style={styles.ratingBadge}>
+          <TouchableOpacity
+            style={styles.ratingBadge}
+            onPress={() => navigation.navigate('MyReviews')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.ratingText}>
-              ★ {user.rating.toFixed(1)} ({user.rating_count} reviews)
+              ★ {user.rating.toFixed(1)} ({user.rating_count} reviews) ›
             </Text>
-          </View>
+          </TouchableOpacity>
         ) : null}
 
         {/* About Me directly under the name & rating */}
@@ -321,6 +325,30 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View>
             <Text style={styles.myGigsTitle}>{t('profile.myGigsTitle')}</Text>
             <Text style={styles.myGigsSubtitle}>{t('profile.myGigsSub')}</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+      </TouchableOpacity>
+
+      {/* My Reviews & Feedback Section */}
+      <TouchableOpacity
+        style={styles.myGigsCard}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('MyReviews')}
+      >
+        <View style={styles.myGigsLeft}>
+          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#fef3c7' }]}>
+            <Ionicons name="star" size={22} color="#f59e0b" />
+          </View>
+          <View>
+            <Text style={styles.myGigsTitle}>
+              {language === 'am' ? 'የእኔ ግምገማዎች' : 'My Reviews & Feedback'}
+            </Text>
+            <Text style={styles.myGigsSubtitle}>
+              {user?.rating_count && user.rating_count > 0
+                ? `★ ${user.rating.toFixed(1)} (${user.rating_count} ${user.rating_count === 1 ? 'review' : 'reviews'}) • View comments`
+                : (language === 'am' ? 'ደረጃዎችንና አስተያየቶችን ይመልከቱ' : 'See ratings and neighbor feedback')}
+            </Text>
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
