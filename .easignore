@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Expo & Web
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native builds
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+/ios
+/android
+
+# Debug logs & temp files
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.pem
+.env*.local
+*.tsbuildinfo
+
+# Explicitly INCLUDE google-services.json for EAS Build worker
+# (kept out of GitHub via .gitignore, but packaged directly by EAS)
+!google-services.json
