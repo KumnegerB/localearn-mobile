@@ -29,9 +29,11 @@
         "projectId": "b3659f5d-c988-41c3-98c3-83064c768433"
       }
     },
+    "newArchEnabled": false,
     "plugins": [
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-location"
     ]
   }
 }
