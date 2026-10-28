@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.sira.app",
+      "googleServicesFile": "./google-services.json",
       "userInterfaceStyle": "light",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
