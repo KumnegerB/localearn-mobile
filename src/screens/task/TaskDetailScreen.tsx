@@ -199,7 +199,6 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           <>
             <View style={styles.divider} />
             <Text style={styles.sectionHeader}>{t('taskDetail.postedBy')}</Text>
-            <Text style={styles.sectionHeader}>Posted By</Text>
             <TouchableOpacity
               style={styles.userCard}
               activeOpacity={0.7}

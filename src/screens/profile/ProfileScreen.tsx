@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/useAuthStore';
-import { validateFullName, validateUsername } from '../../utils/validators';
+import { validateFullName, validateUsername, validatePhoneNumber } from '../../utils/validators';
 import { useRequireTrustAction } from '../../hooks/useRequireTrustAction';
 import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
@@ -66,12 +66,14 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [username, setUsername] = useState(user?.username || '');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const skillsList = (user?.skills || '')
     .split(',')
@@ -81,6 +83,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   const handleOpenEdit = () => {
     setFullName(user?.full_name || '');
     setUsername(user?.username || '');
+    setPhoneNumber(user?.phone_number || '');
     setBio(user?.bio || '');
     const currentSkills = (user?.skills || '')
       .split(',')
@@ -90,6 +93,7 @@ export const ProfileScreen = ({ navigation }: any) => {
     setCustomSkillInput('');
     setNameError(null);
     setUsernameError(null);
+    setPhoneError(null);
     setIsEditing(true);
   };
 
@@ -138,10 +142,22 @@ export const ProfileScreen = ({ navigation }: any) => {
     }
     setUsernameError(null);
 
+    let cleanPhone: string | null = null;
+    if (phoneNumber.trim()) {
+      const phoneErr = validatePhoneNumber(phoneNumber);
+      if (phoneErr) {
+        setPhoneError(phoneErr);
+        return;
+      }
+      cleanPhone = phoneNumber.trim();
+    }
+    setPhoneError(null);
+
     setIsSaving(true);
     const success = await updateProfile({
       full_name: fullName.trim(),
       username: cleanUsername,
+      phone_number: cleanPhone,
       bio: bio.trim(),
       skills: selectedSkills.join(', '),
     });
@@ -325,6 +341,24 @@ export const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.accountDivider} />
 
         <View style={styles.accountRow}>
+          <Ionicons name="call-outline" size={18} color="#64748b" style={styles.accountIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.accountLabel}>{t('auth.phoneNumber') || 'Phone Number'}</Text>
+            {user?.phone_number ? (
+              <Text style={styles.accountValue}>{user.phone_number}</Text>
+            ) : (
+              <TouchableOpacity onPress={handleOpenEdit} activeOpacity={0.7}>
+                <Text style={[styles.accountValue, { color: '#103B31', fontWeight: '600' }]}>
+                  {language === 'am' ? '+ ስልክ ቁጥር ያክሉ' : '+ Add phone number'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.accountDivider} />
+
+        <View style={styles.accountRow}>
           <Ionicons name="calendar-outline" size={18} color="#64748b" style={styles.accountIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.accountLabel}>{t('profile.memberSince')}</Text>
@@ -432,6 +466,34 @@ export const ProfileScreen = ({ navigation }: any) => {
                   <Text style={styles.inlineErrorText}>{usernameError}</Text>
                 </View>
               ) : null}
+
+              {/* Phone Number */}
+              <Text style={styles.inputLabel}>{language === 'am' ? 'ስልክ ቁጥር (አማራጭ)' : 'Phone Number (Optional)'}</Text>
+              <TextInput
+                style={[styles.input, !!phoneError && styles.inputError]}
+                value={phoneNumber}
+                onChangeText={(val) => {
+                  setPhoneNumber(val);
+                  if (phoneError) setPhoneError(null);
+                }}
+                placeholder="+251 91 234 5678"
+                placeholderTextColor="#94a3b8"
+                keyboardType="phone-pad"
+                cursorColor="#103B31"
+                selectionColor="#cce3de"
+              />
+              {phoneError ? (
+                <View style={styles.inlineErrorRow}>
+                  <Ionicons name="alert-circle" size={13} color="#ef4444" style={{ marginRight: 4 }} />
+                  <Text style={styles.inlineErrorText}>{phoneError}</Text>
+                </View>
+              ) : (
+                <Text style={styles.fieldHint}>
+                  {language === 'am'
+                    ? 'ስልክ ቁጥር ካከሉ ሌሎች ጎረቤቶች በቀጥታ ሊደውሉልዎት ይችላሉ።'
+                    : 'Allows neighbors to call you directly for gigs.'}
+                </Text>
+              )}
 
               {/* About Me with Character Limit */}
               <View style={styles.labelWithCountRow}>
@@ -1088,6 +1150,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ef4444',
     fontWeight: '600',
+  },
+  fieldHint: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   textArea: {
     height: 76,
