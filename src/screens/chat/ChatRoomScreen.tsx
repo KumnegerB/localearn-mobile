@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
   const { taskId, taskTitle, otherUser } = route.params || {};
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(true);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const {
     messages,
@@ -68,6 +70,21 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
     };
   }, [taskId, otherUser?.id, token]);
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const handleSend = () => {
     if (!inputText.trim()) return;
     sendMessage(inputText.trim(), {
@@ -99,7 +116,11 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <View style={styles.screenWrapper}>
+    <KeyboardAvoidingView
+      style={styles.screenWrapper}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
       {/* Telegram-style Top Header */}
       <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top, 12) }]}>
         <View style={styles.headerRow}>
@@ -161,11 +182,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
       </View>
 
       {/* Messages List & Input Container */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         {loadingMessages ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#103B31" />
@@ -221,7 +238,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
           />
         )}
 
-        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 10 : Math.max(insets.bottom, 12) }]}>
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
@@ -241,8 +258,8 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
             <Ionicons name="send" size={17} color="#ffffff" style={{ marginLeft: 2 }} />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -67,6 +67,12 @@ export const NotificationScreen = ({ navigation }: any) => {
           color: '#2563eb',
           bg: '#eff6ff',
         };
+      case 'APPLICATION_WITHDRAWN':
+        return {
+          name: 'person-remove' as const,
+          color: '#ef4444',
+          bg: '#fef2f2',
+        };
       default:
         return {
           name: 'notifications' as const,
@@ -81,7 +87,7 @@ export const NotificationScreen = ({ navigation }: any) => {
       await markAsRead(item.id);
     }
 
-    if (item.type === 'NEW_CANDIDATE' && item.task_id) {
+    if ((item.type === 'NEW_CANDIDATE' || item.type === 'APPLICATION_WITHDRAWN') && item.task_id) {
       const extracted = item.message.match(/'([^']+)'/);
       const title = item.task_title || (extracted ? extracted[1] : undefined) || 'Gig Candidates';
       navigation.navigate('TaskCandidates', {

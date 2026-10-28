@@ -9,7 +9,10 @@ import {
   Alert,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatPrice } from '../../utils/currency';
@@ -20,6 +23,7 @@ import { useTranslation } from '../../i18n';
 
 export const TaskDetailScreen = ({ route, navigation }: any) => {
   const { taskId } = route.params;
+  const insets = useSafeAreaInsets();
   const { t, language } = useTranslation();
   const {
     currentTask: storeCurrentTask,
@@ -146,7 +150,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 + Math.max(insets.bottom, 16) }]}>
         {/* Status & Category */}
         <View style={styles.metaRow}>
           <View style={styles.categoryPill}>
@@ -282,7 +286,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
       {/* Action Bar */}
       {hasBottomActions && (
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           {!isCreator && currentTask.creator && (
             <TouchableOpacity
               style={styles.chatButton}
@@ -376,7 +380,10 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
       {/* Apply Modal */}
       <Modal visible={applyModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('taskDetail.applyNow')}</Text>
@@ -426,7 +433,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <TrustActionModal

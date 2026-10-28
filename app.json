@@ -13,6 +13,7 @@
     "android": {
       "package": "com.sira.app",
       "userInterfaceStyle": "light",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#103B31",
         "foregroundImage": "./assets/android-icon-foreground.png",
