@@ -22,7 +22,6 @@ import { TrustActionModal } from '../../components/trust/TrustActionModal';
 import { useTranslation } from '../../i18n';
 import { resetToLanding } from '../../navigation/navigationRef';
 import { invalidateUserProfileCache } from './UserProfileScreen';
-import { sendTestNotification } from '../../services/notificationService';
 
 const MAX_BIO_LENGTH = 160;
 
@@ -430,47 +429,6 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-      </TouchableOpacity>
-
-      {/* Test Notification Card */}
-      <TouchableOpacity
-        style={styles.myGigsCard}
-        activeOpacity={0.8}
-        onPress={async () => {
-          const sent = await sendTestNotification();
-          if (sent) {
-            Alert.alert(
-              language === 'am' ? 'ማሳወቂያ ተልኳል' : 'Notification Sent',
-              language === 'am'
-                ? 'የሙከራ ማሳወቂያ ወደ ስልክዎ ተልኳል። በማሳወቂያ ሳጥንዎ ውስጥ ይመልከቱት።'
-                : 'A test notification was triggered. Check your phone notification tray!'
-            );
-          } else {
-            Alert.alert(
-              language === 'am' ? 'ማስታወቂያ' : 'Notice',
-              language === 'am'
-                ? 'እባክዎ በስልክዎ ቅንብሮች ውስጥ የማሳወቂያ ፈቃድ መሰጠቱን ያረጋግጡ።'
-                : 'Please check your phone settings to ensure notifications are allowed for this app.'
-            );
-          }
-        }}
-      >
-        <View style={styles.myGigsLeft}>
-          <View style={[styles.myGigsIconWrapper, { backgroundColor: '#f0fdf4' }]}>
-            <Ionicons name="notifications-outline" size={22} color="#16a34a" />
-          </View>
-          <View>
-            <Text style={styles.myGigsTitle}>
-              {language === 'am' ? 'ማሳወቂያዎችን ይሞክሩ' : 'Test Notifications'}
-            </Text>
-            <Text style={styles.myGigsSubtitle}>
-              {language === 'am'
-                ? 'ማሳወቂያዎች በስልክዎ ላይ በትክክል መስራታቸውን ያረጋግጡ'
-                : 'Send an instant test alert to your phone notification bar'}
-            </Text>
-          </View>
-        </View>
-        <Ionicons name="paper-plane-outline" size={18} color="#16a34a" />
       </TouchableOpacity>
 
       {/* Log Out Button */}

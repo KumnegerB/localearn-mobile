@@ -30,3 +30,4 @@ yarn-error.*
 # Explicitly INCLUDE google-services.json for EAS Build worker
 # (kept out of GitHub via .gitignore, but packaged directly by EAS)
 !google-services.json
+

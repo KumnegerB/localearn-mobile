@@ -13,6 +13,10 @@
     "android": {
       "package": "com.sira.app",
       "googleServicesFile": "./google-services.json",
+      "notification": {
+        "icon": "./assets/notification-icon.png",
+        "color": "#103B31"
+      },
       "userInterfaceStyle": "light",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
@@ -39,7 +43,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/android-icon-monochrome.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#103B31"
         }
       ]
