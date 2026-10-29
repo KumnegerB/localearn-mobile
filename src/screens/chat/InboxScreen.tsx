@@ -17,10 +17,12 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../api/client';
 import { User, Conversation } from '../../types';
+import { useTranslation } from '../../i18n';
 
 export const InboxScreen = ({ navigation }: any) => {
   const { conversations, fetchConversations, isLoading, markConversationAsRead } = useChatStore();
   const { user } = useAuthStore();
+  const { language } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   // Search state
@@ -202,79 +204,94 @@ export const InboxScreen = ({ navigation }: any) => {
 
   const isSearching = searchQuery.trim().length > 0;
 
-  const renderConversationItem = (item: Conversation) => (
-    <TouchableOpacity
-      key={`conv-${item.other_user.id}`}
-      style={styles.conversationRow}
-      activeOpacity={0.65}
-      onPress={() => {
-        markConversationAsRead(item.task_id, item.other_user.id);
-        navigation.navigate('ChatRoom', {
-          taskId: item.task_id,
-          taskTitle: item.task_title,
-          otherUser: item.other_user,
-        });
-      }}
-    >
-      <View style={styles.avatarWrapper}>
-        {item.other_user.avatar_url ? (
-          <Image source={{ uri: item.other_user.avatar_url }} style={styles.avatarImage} />
-        ) : (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {getInitials(item.other_user.full_name)}
-            </Text>
-          </View>
-        )}
-      </View>
+  const renderConversationItem = (item: Conversation) => {
+    const isMyLastMessage = item.last_message?.sender_id === user?.id;
+    const isSeen = Boolean(item.last_message?.is_read);
+    const showSeen = isMyLastMessage && isSeen;
 
-      <View style={styles.contentCol}>
-        <View style={styles.rowTop}>
-          <View style={styles.nameRow}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {item.other_user.full_name}
-            </Text>
-            {Boolean(item.other_user.username) ? (
-              <Text style={styles.userHandleText} numberOfLines={1}>
-                @{item.other_user.username}
+    return (
+      <TouchableOpacity
+        key={`conv-${item.other_user.id}`}
+        style={styles.conversationRow}
+        activeOpacity={0.65}
+        onPress={() => {
+          markConversationAsRead(item.task_id, item.other_user.id);
+          navigation.navigate('ChatRoom', {
+            taskId: item.task_id,
+            taskTitle: item.task_title,
+            otherUser: item.other_user,
+          });
+        }}
+      >
+        <View style={styles.avatarWrapper}>
+          {item.other_user.avatar_url ? (
+            <Image source={{ uri: item.other_user.avatar_url }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {getInitials(item.other_user.full_name)}
               </Text>
-            ) : null}
-          </View>
-          <Text style={[styles.timeText, item.unread_count > 0 && styles.unreadTimeText]}>
-            {formatTime(item.last_message.created_at)}
-          </Text>
+            </View>
+          )}
         </View>
 
-        {item.task_title && item.task_title !== 'Direct Message' ? (
-          <View style={styles.taskTagRow}>
-            <Ionicons name="briefcase-outline" size={11} color="#103B31" style={{ marginRight: 3 }} />
-            <Text style={styles.taskTitleTag} numberOfLines={1}>
-              {item.task_title}
+        <View style={styles.contentCol}>
+          <View style={styles.rowTop}>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName} numberOfLines={1}>
+                {item.other_user.full_name}
+              </Text>
+              {Boolean(item.other_user.username) ? (
+                <Text style={styles.userHandleText} numberOfLines={1}>
+                  @{item.other_user.username}
+                </Text>
+              ) : null}
+            </View>
+            <Text style={[styles.timeText, item.unread_count > 0 && styles.unreadTimeText]}>
+              {formatTime(item.last_message.created_at)}
             </Text>
           </View>
-        ) : null}
 
-        <View style={styles.rowBottom}>
-          <Text
-            style={[
-              styles.lastMessageText,
-              item.unread_count > 0 && styles.unreadLastMessageText,
-            ]}
-            numberOfLines={1}
-          >
-            {item.last_message.content}
-          </Text>
-          {item.unread_count > 0 ? (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>
-                {item.unread_count > 99 ? '99+' : item.unread_count}
+          {item.task_title && item.task_title !== 'Direct Message' ? (
+            <View style={styles.taskTagRow}>
+              <Ionicons name="briefcase-outline" size={11} color="#103B31" style={{ marginRight: 3 }} />
+              <Text style={styles.taskTitleTag} numberOfLines={1}>
+                {item.task_title}
               </Text>
             </View>
           ) : null}
+
+          <View style={styles.rowBottom}>
+            <Text
+              style={[
+                styles.lastMessageText,
+                item.unread_count > 0 && styles.unreadLastMessageText,
+              ]}
+              numberOfLines={1}
+            >
+              {isMyLastMessage
+                ? `${language === 'am' ? 'እርስዎ: ' : 'You: '}${item.last_message.content}`
+                : item.last_message.content}
+            </Text>
+            {item.unread_count > 0 ? (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>
+                  {item.unread_count > 99 ? '99+' : item.unread_count}
+                </Text>
+              </View>
+            ) : showSeen ? (
+              <View style={styles.seenBadge}>
+                <Ionicons name="checkmark-done" size={12} color="#64748b" style={{ marginRight: 2 }} />
+                <Text style={styles.seenBadgeText}>
+                  {language === 'am' ? 'የታየ' : 'Seen'}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -611,6 +628,17 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 11,
     fontWeight: '800',
+  },
+  seenBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+  },
+  seenBadgeText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
   separator: {
     height: StyleSheet.hairlineWidth,

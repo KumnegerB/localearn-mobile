@@ -326,15 +326,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const updatedActive = s.messages.map((m) =>
               m.sender_id !== otherUserId ? { ...m, is_read: true } : m
             );
+            const updatedConversations = s.conversations.map((c) => {
+              if (c.other_user.id === otherUserId && c.last_message && c.last_message.sender_id !== otherUserId) {
+                return {
+                  ...c,
+                  last_message: {
+                    ...c.last_message,
+                    is_read: true,
+                  },
+                };
+              }
+              return c;
+            });
+
             return {
               messages: updatedActive,
               messagesByRoom: {
                 ...s.messagesByRoom,
                 [roomKey]: updatedRoom,
               },
+              conversations: updatedConversations,
             };
           });
           AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(get().messagesByRoom)).catch(() => {});
+          AsyncStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(get().conversations)).catch(() => {});
           return;
         }
 
