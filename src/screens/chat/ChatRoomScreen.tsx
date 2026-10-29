@@ -16,9 +16,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useChatStore } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useTranslation } from '../../i18n';
 
 export const ChatRoomScreen = ({ route, navigation }: any) => {
   const { taskId, taskTitle, otherUser } = route.params || {};
+  const { language } = useTranslation();
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -157,7 +159,6 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
                   <Text style={styles.avatarText}>{initials}</Text>
                 </View>
               )}
-              <View style={styles.onlineBadge} />
             </View>
 
             <View style={styles.headerInfo}>
@@ -165,7 +166,7 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
                 {otherUserName}
               </Text>
               <Text style={styles.headerSubtitle} numberOfLines={1}>
-                {taskTitle ? `Gig: ${taskTitle}` : 'Active now'}
+                {taskTitle ? `Gig: ${taskTitle}` : (language === 'am' ? 'ቀጥተኛ መልዕክት' : 'Direct Message')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -210,8 +211,11 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
                 </Text>
               </View>
             }
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const isMe = item.sender_id === user?.id;
+              const isLastMessage = index === messages.length - 1;
+              const showSeen = isMe && isLastMessage && Boolean(item.is_read);
+
               return (
                 <View
                   style={[
@@ -235,6 +239,16 @@ export const ChatRoomScreen = ({ route, navigation }: any) => {
                       {formatMessageTime(item.created_at)}
                     </Text>
                   </View>
+
+                  {/* Instagram-style Seen Receipt: Shown on your latest message once read, disappears when partner replies */}
+                  {showSeen && (
+                    <View style={styles.seenContainer}>
+                      <Ionicons name="checkmark-done" size={13} color="#64748b" style={{ marginRight: 3 }} />
+                      <Text style={styles.seenText}>
+                        {language === 'am' ? 'የታየ' : 'Seen'}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               );
             }}
@@ -319,17 +333,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 15,
     fontWeight: '700',
-  },
-  onlineBadge: {
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#22c55e',
-    borderWidth: 2,
-    borderColor: '#ffffff',
   },
   headerInfo: {
     flex: 1,
@@ -462,6 +465,18 @@ const styles = StyleSheet.create({
   },
   otherTimeText: {
     color: '#94a3b8',
+  },
+  seenContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginTop: 2,
+    marginRight: 4,
+  },
+  seenText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
   inputContainer: {
     flexDirection: 'row',

@@ -314,7 +314,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     ws.onmessage = (event) => {
       try {
-        const newMsg: Message = JSON.parse(event.data);
+        const rawData = JSON.parse(event.data);
+
+        // Handle real-time read receipt from partner
+        if (rawData?.type === 'read_receipt') {
+          const roomKey = getRoomKey(safeTaskId, otherUserId);
+          set((s) => {
+            const updatedRoom = (s.messagesByRoom[roomKey] || []).map((m) =>
+              m.sender_id !== otherUserId ? { ...m, is_read: true } : m
+            );
+            const updatedActive = s.messages.map((m) =>
+              m.sender_id !== otherUserId ? { ...m, is_read: true } : m
+            );
+            return {
+              messages: updatedActive,
+              messagesByRoom: {
+                ...s.messagesByRoom,
+                [roomKey]: updatedRoom,
+              },
+            };
+          });
+          AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(get().messagesByRoom)).catch(() => {});
+          return;
+        }
+
+        const newMsg: Message = rawData;
         const state = get();
 
         // A message belongs to this conversation if either the sender or receiver is otherUserId
